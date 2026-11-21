@@ -10,6 +10,10 @@
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 import { VitePWA } from "vite-plugin-pwa";
 
+import { tanstackStart } from '@tanstack/react-start/plugin/vite'
+import netlify from '@netlify/vite-plugin-tanstack-start'
+
+
 export default defineConfig({
   vite: {
     plugins: [VitePWA({
@@ -25,7 +29,10 @@ export default defineConfig({
           { urlPattern: ({ url }) => url.origin === self.location.origin && /\/assets\/.+[-.][A-Za-z0-9_-]{8,}\.(js|css|woff2|png|svg)$/.test(url.pathname), handler: "CacheFirst", options: { cacheName: "artha-assets", expiration: { maxEntries: 150, maxAgeSeconds: 2592000 }, cacheableResponse: { statuses: [200] } } },
         ],
       },
-    })],
+    })
+    tanstackStart(),
+    netlify(),
+    ],
   },
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
