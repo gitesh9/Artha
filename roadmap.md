@@ -1,0 +1,21 @@
+# Roadmap
+- [x] Encrypt financial snapshots and sync journal; migrate existing plaintext safely
+- [x] Add device-passphrase unlock and cross-tab locking with secure sign-out
+- [x] Explain key protection and verify encrypted storage, mobile/offline unlock, and sign-out with unsynced work
+- [x] Persistent connection banner and last acknowledged expense-sync time
+- [x] Device sync history with pending/completed/failed entries and targeted retries
+- [x] Advice-only conflict comparison via OpenRouter with consent, mobile layout, and safe retries
+- [ ] Live AI recommendation verification (blocked: OpenRouter returns HTTP 401 for the saved key; replacement declined)
+- [x] Mobile verification and local-storage security explanation
+- [x] Redesign all existing screens with accessible dark/light themes and verify signed-in flows
+- [x] Explore visual expense insights and period comparisons (discussion only); use both budget and historical baselines
+- [x] Phase 1 core: login, accounts, transactions, overview, calendar, budgets, currencies
+- [x] Rename app to Artha
+- [ ] Evening reminder push notifications (needs VAPID keys + scheduled job on hosting)
+- [ ] Password-reset email delivery (blocked: verified Resend sender not yet created)
+- [x] Secure password recovery forms and authenticated password changes
+- [x] Navigation loading states and graceful failure handling
+- [x] Offline snapshots, expense logging, and reconnect sync (signed-in reconnect flow verified)
+- [ ] Published offline cold-start check (blocked: published app with Neon credentials required)
+- [ ] Phase 2: assets/liabilities, portfolio, AI chat (OpenRouter key), tax estimator, investment API (your API URL/key)
+- [ ] Phase 3 ideas: see .lovable/plan/

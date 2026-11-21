@@ -1,0 +1,9 @@
+{
+  "name": "Artha",
+  "short_name": "Artha",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#f8f4ec",
+  "theme_color": "#1f3d33",
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}
