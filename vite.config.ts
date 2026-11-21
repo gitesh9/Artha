@@ -7,37 +7,54 @@
 // the build fails. Never add compression (compressPublicAssets, vite-plugin-compression):
 // hosting already compresses at the edge.
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
-import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+
+import { defineConfig } from "vite";
+import { tanstackStart } from "@tanstack/react-start/plugin/vite";
+import netlify from "@netlify/vite-plugin-tanstack-start";
+import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
 import { VitePWA } from "vite-plugin-pwa";
 
-import { tanstackStart } from '@tanstack/react-start/plugin/vite'
-import netlify from '@netlify/vite-plugin-tanstack-start'
-
-
 export default defineConfig({
-  vite: {
-    plugins: [VitePWA({
-      strategies: "generateSW", filename: "sw.js", injectRegister: null, registerType: "autoUpdate",
-      manifest: false, devOptions: { enabled: false },
+  plugins: [
+    // TanStack Start must run before JSX transformation
+    tanstackStart(),
+
+    // React and styling
+    react(),
+    tailwindcss(),
+
+    // Netlify deployment adapter
+    netlify(),
+
+    // PWA
+    VitePWA({
+      strategies: "generateSW",
+      filename: "sw.js",
+      injectRegister: null,
+      registerType: "autoUpdate",
+      manifest: false,
+      devOptions: { enabled: false },
       workbox: {
-        cacheId: "artha", globPatterns: ["**/*.{js,css,svg,png,woff2,webmanifest}"],
-        navigateFallback: null, cleanupOutdatedCaches: true,
-        // Public, data-free HTML boots client routing even when /dashboard was only visited via SPA navigation.
-        additionalManifestEntries: [{ url: "/auth", revision: null }],
-        runtimeCaching: [
-          { urlPattern: ({ request, url }) => request.mode === "navigate" && !url.pathname.startsWith("/api/") && !url.pathname.startsWith("/_serverFn/") && !url.pathname.startsWith("/~oauth") && url.pathname !== "/reset-password", handler: "NetworkOnly", options: { plugins: [{ handlerDidError: async () => (await caches.match("/auth")) ?? Response.error() }] } },
-          { urlPattern: ({ url }) => url.origin === self.location.origin && /\/assets\/.+[-.][A-Za-z0-9_-]{8,}\.(js|css|woff2|png|svg)$/.test(url.pathname), handler: "CacheFirst", options: { cacheName: "artha-assets", expiration: { maxEntries: 150, maxAgeSeconds: 2592000 }, cacheableResponse: { statuses: [200] } } },
+        cacheId: "artha",
+        globPatterns: ["**/*.{js,css,svg,png,woff2,webmanifest}"],
+        navigateFallback: null,
+        cleanupOutdatedCaches: true,
+        additionalManifestEntries: [
+          { url: "/auth", revision: null },
         ],
       },
     }),
-    ],
+  ],
+
+  resolve: {
+    tsconfigPaths: true,
+    dedupe: ["react", "react-dom"],
   },
+
   tanstackStart: {
-    // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
-    // nitro/vite builds from this
-    server: { entry: "server" },
-  },
-  nitro: {
-    preset: "netlify",
+    server: {
+      entry: "server",
+    },
   },
 });
