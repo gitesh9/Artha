@@ -1,4 +1,4 @@
-# Rupee Sense Savings Guide
+# Money Sense Savings Guide
 
 I have an idea to build a app which will help me with my money management and will know the flow of the money and will suggest better alternatives to what to do of the extra money legally so it would also know all the rules of Indian constitution and would also have a ai chat which would help in any difficulties like if i want to know how to do something or want to do something the ai will either guide me to it or it will do it by itself and same it will also estimate the tax I would have to pay and help to minimize it by various means like investing, trading, stocks and others the suggestion giving can be done by an api which I already have an app which will suggest were to invest and what not i just have to call its api's. Ensure you build the app in such a way that it would be easy for a human like me to extend its functionality and add new features and be easy to maintain, so maintain a file explaining all the structure and follow design patterns and best practices when coding and building the app.
 I am thinking of the following features:

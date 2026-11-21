@@ -29,14 +29,15 @@ export default defineConfig({
           { urlPattern: ({ url }) => url.origin === self.location.origin && /\/assets\/.+[-.][A-Za-z0-9_-]{8,}\.(js|css|woff2|png|svg)$/.test(url.pathname), handler: "CacheFirst", options: { cacheName: "artha-assets", expiration: { maxEntries: 150, maxAgeSeconds: 2592000 }, cacheableResponse: { statuses: [200] } } },
         ],
       },
-    })
-    tanstackStart(),
-    netlify(),
+    }),
     ],
   },
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     // nitro/vite builds from this
     server: { entry: "server" },
+  },
+  nitro: {
+    preset: "netlify",
   },
 });
