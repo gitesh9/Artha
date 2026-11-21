@@ -30,7 +30,7 @@ use the editor.
 <!-- LOVABLE:END -->
 
 ## Architecture decisions
-- No Supabase, Lovable Cloud or Lovable AI services: the app must self-host on free tiers (Neon Postgres, Better Auth, Cloudflare Workers, OpenRouter). Why: owner requirement.
+- No Supabase, Lovable Cloud or Lovable AI services: the app self-hosts on Netlify with Neon Postgres, Better Auth and OpenRouter. Why: owner requirement and deployment target.
 - Feature folders `src/features/<name>/` with repository (userId-scoped DB), service (pure, tested) and functions (zod + requireUser server fns); see ARCHITECTURE.md. Why: easy for a human to extend.
 - Money is stored as integer minor units plus currency code; reports convert to the user's base currency. Why: no float errors, multi-currency.
 - Dev without DATABASE_URL uses in-memory PGlite migrated from ./drizzle. Why: zero-setup preview.
@@ -45,3 +45,7 @@ use the editor.
 - Secure sign-out revokes the server session online, deletes snapshots, and retains only encrypted journal work; local-only lock explicitly leaves the online session active. Why: protecting a shared device must not silently discard unsynced money or falsely claim session revocation.
 - Keep sync outcomes in a user-scoped device journal; advance last-synced time only after a server acknowledgement, and preserve completed history separately from the active outbox. Why: connection status must never imply that a local save has reached the server.
 - Register the generated Workbox app worker only through the preview-safe wrapper; never cache auth RPCs, reset pages, or server functions, and clear app caches at sign-out. Why: offline use must not compromise authentication or previews.
+- Import the Netlify adapter only during builds; Vite owns local SSR and assets, including behind Netlify Dev. Why: duplicate emulators break local styling and configuration loading.
+- Precache only a revisioned, data-free TanStack shell for offline navigation, regenerate Workbox after prerender, and never cache live navigation HTML. Why: cold starts and upgrades must preserve device-vault privacy.
+- Treat public session lookup failures as signed-out only on the landing page; private guards still fail closed. Why: service outages must not prevent public startup or bypass account isolation.
+- Capture browser installation events in one shared client-mounted control, with manual guidance when unavailable. Why: browser prompts are single-use and platform-dependent.

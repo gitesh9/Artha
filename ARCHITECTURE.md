@@ -1,6 +1,6 @@
 # Artha — Architecture Guide
 
-A personal money manager. Stack: TanStack Start (React 19, SSR, server functions), Drizzle ORM + Postgres (Neon), Better Auth, Tailwind v4. Hosted free on Cloudflare Workers. No vendor lock-in: every external service sits behind a small adapter.
+A personal money manager. Stack: TanStack Start (React 19, SSR, server functions), Drizzle ORM + Postgres (Neon), Better Auth, Tailwind v4. Deployment targets Netlify Functions using the official TanStack adapter. No vendor lock-in: every external service sits behind a small adapter.
 
 ## Folder map
 ```text
@@ -54,7 +54,7 @@ Create `core/integrations/<name>.ts` exporting an interface + one implementation
 ## Deploying free
 1. Create a Neon project, copy the connection string.
 2. `DATABASE_URL=... bun run db:migrate`
-3. Deploy to Cloudflare Workers (`bun run build`, then `wrangler deploy` on the output) with DATABASE_URL and BETTER_AUTH_SECRET set as secrets.
+3. Follow `DEPLOYMENT.md` for Netlify environment variables, build settings, migrations, local proxy troubleshooting, and PWA checks. The adapter generates the SSR function; `dist/client` contains only public assets.
 
 See `roadmap.md` for what's next.
 
@@ -68,7 +68,7 @@ Set `RESEND_API_KEY` and `PASSWORD_RESET_FROM` (a verified Resend sender) on you
 
 New income/expense entries are persisted encrypted before sending. Reconnection, an open-app 30-second retry, and manual Retry sync replay the queue after checking the current server user. Stable UUIDs + primary-key conflict handling + exact payload comparison prevent duplicate writes after a lost response. Only an acknowledged entry leaves the queue. Rejected/deleted-account entries remain visible and are not silently discarded. Account/budget edits, deletion, security changes and sign-in require internet. Secure sign-out locks every tab, clears Query and financial snapshot caches, and revokes the current online session; the encrypted sync journal remains, including pending entries. Password recovery also locks local access but preserves encrypted entries for the same user to sync after signing back in and unlocking.
 
-`core/offline/register.ts` is the only registrar. `vite-plugin-pwa` generates `/sw.js`; dev, iframe and Lovable previews never register it. Navigation uses NetworkOnly, falling back to the precached data-free `/auth` document offline; hashed assets use CacheFirst. Old `artha-pages` plaintext document caches are deleted on initialization. Financial routes disable SSR so private values do not enter HTML documents, and `requireUser` marks financial RPCs `Cache-Control: no-store`. Auth endpoints, server functions, OAuth and password reset pages are never runtime-cached. Offline reopening requires visiting the published app online first, entering the device passphrase, and a still-valid cached identity; closing the app pauses outbox sync until it is reopened. This is not unattended background sync. Cold-start offline behavior must be checked on the published app, not the dev preview.
+`core/offline/register.ts` is the only registrar. `vite-plugin-pwa` generates `/sw.js`; dev, iframe and Lovable previews never register it. TanStack prerenders a data-free shell at `/offline.html`; a final build hook regenerates Workbox after prerender to revision the shell and assets. Navigation uses NetworkFirst with HTML caching disabled, falling back to that shell only on network failure. Hashed assets are precached. Old `artha-pages` plaintext document caches are deleted on initialization. Financial routes disable SSR so private values do not enter HTML documents, and session/financial RPCs are `Cache-Control: no-store`. Auth endpoints, server functions, OAuth and password reset pages are never runtime-cached. The shared InstallApp control captures browser install events after mounting, consumes single-use prompts, hides after installation, and offers Safari/browser-menu instructions when necessary. Offline reopening requires visiting the published app online first, entering the device passphrase, and a still-valid cached identity; closing the app pauses outbox sync until it is reopened. This is not unattended background sync. Cold-start offline behavior must be checked on the published app, not the dev preview.
 
 Navigation shows immediate loading feedback, shared loading placeholders and retriable errors. Query reads retry once; non-idempotent writes are never blindly retried. Browser storage failures keep entry forms open instead of claiming a save. Service recovery is not database disaster recovery: configure Neon backups separately for your hosting plan.
 

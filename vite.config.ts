@@ -1,60 +1,82 @@
-// @lovable.dev/vite-tanstack-config already includes the following — do NOT add them manually
-// or the app will break with duplicate plugins:
-//   - TanStack devtools (dev-only, first), tanstackStart, viteReact, tailwindcss, tsConfigPaths,
-//     nitro (build-only using cloudflare as a default target), VITE_* env injection, @ path alias,
-//     React/TanStack dedupe, error logger plugins, and sandbox detection (port/host/strictPort).
-// Never set ssr.external or resolve.external: the Worker has no runtime module resolution, so
-// the build fails. Never add compression (compressPublicAssets, vite-plugin-compression):
-// hosting already compresses at the edge.
-// You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
-
-import { defineConfig } from "vite";
+import { defineConfig, type Plugin } from "vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
-import netlify from "@netlify/vite-plugin-tanstack-start";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
-import { VitePWA } from "vite-plugin-pwa";
+import tsConfigPaths from "vite-tsconfig-paths";
+import { VitePWA, type VitePWAOptions } from "vite-plugin-pwa";
 
-export default defineConfig({
+// Netlify's emulator patches globals during import. Do not load it in Vite dev:
+// Vite owns SSR/assets locally; Netlify CLI is only a proxy, not a second SSR server.
+export const offlineBuildOptions = {
+    strategies: "generateSW",
+    outDir: "dist/client",
+    filename: "sw.js",
+    injectRegister: null,
+    registerType: "autoUpdate",
+    manifest: false,
+    devOptions: { enabled: false },
+    workbox: {
+      cacheId: "artha",
+      globPatterns: ["**/*.{js,css,svg,png,woff2,webmanifest}", "offline.html"],
+      globIgnores: ["**/server/**"],
+      navigateFallback: null,
+      cleanupOutdatedCaches: true,
+      runtimeCaching: [{
+        urlPattern: ({ request, url }) => request.mode === "navigate" &&
+          !/^\/(?:api|_serverFn|reset-password|~oauth|auth)(?:\/|$)/.test(url.pathname),
+        handler: "NetworkFirst",
+        options: {
+          cacheName: "artha-navigation",
+          // Never persist real HTML; offline recovery uses only the static shell.
+          cacheableResponse: { statuses: [] },
+          precacheFallback: { fallbackURL: "/offline.html" },
+        },
+      }],
+    },
+  } satisfies Partial<VitePWAOptions>;
+
+export default defineConfig(async ({ command }) => {
+  const pwa = VitePWA(offlineBuildOptions);
+  const finishOfflineBuild: Plugin = {
+    name: "artha:pwa-after-prerender",
+    apply: "build",
+    // TanStack creates the shell after both environment builds. Regenerate with
+    // its content hash so upgrades cannot leave an old unrevisioned shell behind.
+    buildApp: { order: "post", async handler() {
+      const plugin = pwa.find((entry) => entry.name === "vite-plugin-pwa") as (Plugin & { api?: { generateSW: () => Promise<unknown> } }) | undefined;
+      if (!plugin?.api) throw new Error("PWA generation API unavailable");
+      await plugin.api.generateSW();
+    } },
+  };
+  return {
   plugins: [
-    // TanStack Start must run before JSX transformation
-    tanstackStart(),
+    tsConfigPaths(),
+    tanstackStart({
+      server: { entry: "server" },
+      // Build a data-free bootstrap document, not a cached signed-in page.
+      spa: { enabled: true, maskPath: "/auth", prerender: { outputPath: "/offline", autoSubfolderIndex: false } },
+    }),
 
     // React and styling
     react(),
     tailwindcss(),
 
     // Netlify deployment adapter
-    netlify(),
+    command === "build" ? (await import("@netlify/vite-plugin-tanstack-start")).default() : null,
 
-    // PWA
-    VitePWA({
-      strategies: "generateSW",
-      filename: "sw.js",
-      injectRegister: null,
-      registerType: "autoUpdate",
-      manifest: false,
-      devOptions: { enabled: false },
-      workbox: {
-        cacheId: "artha",
-        globPatterns: ["**/*.{js,css,svg,png,woff2,webmanifest}"],
-        navigateFallback: null,
-        cleanupOutdatedCaches: true,
-        additionalManifestEntries: [
-          { url: "/auth", revision: null },
-        ],
-      },
-    }),
+    ...pwa,
+    finishOfflineBuild,
   ],
 
   resolve: {
-    tsconfigPaths: true,
     dedupe: ["react", "react-dom"],
   },
-
-  tanstackStart: {
-    server: {
-      entry: "server",
-    },
+  server: {
+    host: "0.0.0.0",
+    port: 5173,
+    strictPort: true,
+    // Permit the editor's preview proxy, not arbitrary hosts.
+    allowedHosts: [".lovable.app", ".lovableproject.com", ".lovableproject-dev.com", ".gpt-eng.com", ".gptengineer.run"],
   },
+  };
 });

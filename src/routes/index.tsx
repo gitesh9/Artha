@@ -3,10 +3,11 @@ import { getCurrentUser } from "@/core/auth/session.functions";
 import { ThemeToggle } from "@/shared/components/ThemeProvider";
 import { Button } from "@/components/ui/button";
 import { offlineUser } from "@/core/offline/storage";
+import { publicSession } from "@/core/auth/public-session";
 
 export const Route = createFileRoute("/")({
   beforeLoad: async () => {
-    const user = typeof window !== "undefined" && !navigator.onLine ? await offlineUser().catch(() => null) : await getCurrentUser();
+    const user = await publicSession(() => typeof window !== "undefined" && !navigator.onLine ? offlineUser() : getCurrentUser());
     if (user) throw redirect({ to: "/dashboard" });
   },
   head: () => ({

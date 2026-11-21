@@ -18,6 +18,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { NavigationStatus, PageLoading } from "@/shared/components/NavigationStatus";
 import { registerOfflineWorker } from "@/core/offline/register";
 import { broadcastVaultLock, listenForVaultLock } from "@/core/offline/vault";
+import { InstallApp } from "@/core/offline/InstallApp";
 
 function NotFoundComponent() {
   return (
@@ -89,7 +90,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Artha — personal money manager" },
       { name: "description", content: "Track expenses, budgets and money flow across currencies." },
-      { name: "theme-color", content: "#1f3d33" },
+      { name: "theme-color", content: "#17181a" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -98,8 +99,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
-      { rel: "icon", href: "/icon.svg", type: "image/svg+xml" },
-      { rel: "apple-touch-icon", href: "/icon.svg" },
+      { rel: "icon", type: "image/png", href: "/favicon.png" },
+      { rel: "apple-touch-icon", type: "image/png", href: "/icon-192.png" },
       { rel: "manifest", href: "/manifest.webmanifest" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
@@ -145,6 +146,7 @@ function RootComponent() {
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <ThemeProvider>
         <Outlet />
+        <InstallApp />
         <NavigationStatus />
         <Toaster position="top-center" />
       </ThemeProvider>

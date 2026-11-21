@@ -1,0 +1,65 @@
+# Artha on Netlify
+
+## Required setup
+
+Use Node **22.12 or newer** (Netlify uses Node 22 from `netlify.toml`). Install dependencies with `bun install` or `npm install`. Keep secrets out of Git and never prefix them with `VITE_`.
+
+Configure these variables on Netlify with **Builds and Functions** scope:
+
+| Variable | Required value |
+| --- | --- |
+| `DATABASE_URL` | Neon Postgres connection string with TLS (`sslmode=require`) |
+| `BETTER_AUTH_SECRET` | A random secret of at least 32 characters; keep it stable across redeploys |
+| `BETTER_AUTH_URL` | Your canonical HTTPS origin, e.g. `https://your-site.netlify.app` (no path) |
+
+Generate a secret locally using `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"`. Paste it into the hosting settings, not source code. Rotating it can invalidate existing sessions.
+
+Optional: `RESEND_API_KEY` + `PASSWORD_RESET_FROM` (verified sender) for recovery emails; `OPENROUTER_API_KEY` + `OPENROUTER_MODEL` for conflict advice. The rest of the app does not require these providers.
+
+Apply the checked-in Drizzle migrations to Neon **before first use**, using `bun run db:migrate` with `DATABASE_URL` in your local environment. This is a database change: review migrations/backups before running against real money data. In-memory preview data is not transferred to Neon.
+
+## Deploy
+
+1. Connect the repository to Netlify.
+2. Build command: `npm run build`. Publish directory: `dist/client`. Both are in `netlify.toml`.
+3. Add the variables above and deploy. Redeploy after changing production variables.
+4. The adapter generates `.netlify/v1/functions/server.mjs`. Do **not** set `dist/server` as the publish directory, drag-and-drop only `dist/client`, add a `/* /index.html 200` redirect, or run a second SSR adapter.
+5. Open `/auth`, create/sign into an account, unlock local protection, add an expense, reload and confirm it reads back. Check Netlify **function logs** for any server error; browser `content.js` video-listener messages are normally from an extension and do not diagnose an Artha 500.
+
+Public startup tolerates a session-service outage; sign-in and private data still require correctly configured credentials and migrated Neon tables. A styled public page is not proof the database works.
+
+## Local development, including Windows
+
+Copy `.env.example` to `.env` (ignored by Git), then set local `BETTER_AUTH_URL=http://localhost:8888` for Netlify Dev, or `http://localhost:5173` for direct Vite. Keep your production HTTPS value only in Netlify. Start one of:
+
+```sh
+npm run dev
+# Open http://localhost:5173
+
+npx netlify dev
+# Open http://localhost:8888; it proxies Vite on port 5173
+```
+
+The Netlify adapter is loaded **only for builds**, not local development. This prevents duplicate SSR emulation and Deno startup during Vite dev. Static assets come from `public`; styles, scripts and SSR come from Vite. No manual `/src/*` or `/@vite/*` production redirects are needed.
+
+If a previous Netlify Dev run generated a stale server function, stop both local processes, delete the **generated** `.netlify/functions-serve` and `.netlify/v1` folders (not the whole `.netlify` folder, which may store your site link), then run Netlify Dev again. Do not run a build immediately before Netlify Dev; it can discover the build's generated function instead of proxying Vite. Update the Netlify CLI if it still discovers an old function. Use direct Vite to isolate proxy problems.
+
+Verify `/manifest.webmanifest` returns JSON, `/src/styles.css` returns CSS, and `/@vite/client` returns JavaScript on port 8888. An HTML response for one of those means an old function or redirect is intercepting assets. For a 500 on sign-in, check terminal/function logs for missing variables, database connectivity, or missing tables; never share connection strings or cookies in logs.
+
+## Install and offline checks
+
+Run `npm test` before deploying. The suite includes real Workbox generation against temporary fixtures, checking that the startup shell is revisioned and financial HTML/JSON are excluded. This does not replace a production Netlify build or an actual offline cold-start test on your deployed address.
+
+The manifest preserves `/dashboard` as the installed start URL and supplies 192px/512px icons. The **Install Artha** button opens Chrome/Edge's native prompt when the browser offers it, otherwise shows manual instructions. Safari on iPhone uses Share → Add to Home Screen. Browsers decide eligibility and timing: an automatic prompt is not guaranteed.
+
+Offline support runs **only on the deployed HTTPS app**, never inside the editor or Vite dev. The generated Workbox worker precaches assets and a revisioned, data-free startup shell; no live financial HTML, authentication responses, reset pages or financial RPC responses are cached.
+
+After deployment:
+1. Visit online, sign in, unlock the device vault, and visit the pages/filters you need offline.
+2. Wait for `/sw.js` to activate, install if desired, then close and reopen the app without internet.
+3. Confirm the vault requires its passphrase and saved pages load; new filters with no snapshot may be unavailable.
+4. Add an expense offline. Confirm the banner says it is saved locally, not online.
+5. Reconnect with the app open and unlocked. Confirm the sync history completes and the expense appears once after reloading.
+6. Sign out online; confirm other tabs lock and no financial text is visible. Encrypted pending work stays on the device until the same account unlocks it.
+
+Installation does not provide a separate backup. Never clear browser storage to fix an icon or update issue while unsynced entries remain. For a stuck worker, use `?sw=off` online to unregister the app worker without deleting the encrypted journal, then reopen the normal URL. The changed theme/icon metadata may require reinstalling an existing home-screen app; do not change its start URL to repair updates.

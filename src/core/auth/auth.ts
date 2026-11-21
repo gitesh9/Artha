@@ -7,9 +7,13 @@ import { passwordPolicy } from "./password-policy";
 import { sendRecoveryEmail } from "@/core/integrations/recovery-email";
 
 function createAuth(db: Db, secret: string) {
+  const baseURL = process.env["BETTER_AUTH_URL"];
+  const secure = !import.meta.env.DEV || Boolean(baseURL?.startsWith("https://"));
   return betterAuth({
     secret,
-    ...(process.env["BETTER_AUTH_URL"] ? { baseURL: process.env["BETTER_AUTH_URL"] } : {}),
+    ...(baseURL ? { baseURL } : {}),
+    // Local Netlify proxy and direct Vite both need to pass Better Auth's origin check.
+    ...(import.meta.env.DEV ? { trustedOrigins: ["http://localhost:5173", "http://localhost:8888", "http://localhost:8080", "https://id-preview--61f8f5db-ea02-48d8-8dc0-4bc37337670c.lovable.app"] } : {}),
     database: drizzleAdapter(db, { provider: "pg", schema }),
     emailAndPassword: {
       enabled: true, autoSignIn: true,
@@ -28,7 +32,7 @@ function createAuth(db: Db, secret: string) {
       } : {}),
     },
     session: { expiresIn: 60 * 60 * 24 * 30 },
-    advanced: { defaultCookieAttributes: { sameSite: "none", secure: true } },
+    advanced: { defaultCookieAttributes: { sameSite: secure && import.meta.env.DEV ? "none" : "lax", secure } },
   });
 }
 

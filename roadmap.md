@@ -1,4 +1,6 @@
 # Roadmap
+- [x] Prepare Netlify deployment and local asset serving, graceful public startup, and deployment instructions
+- [x] Add browser installation flow and validate install controls, generated cache privacy, and preview guards
 - [x] Encrypt financial snapshots and sync journal; migrate existing plaintext safely
 - [x] Add device-passphrase unlock and cross-tab locking with secure sign-out
 - [x] Explain key protection and verify encrypted storage, mobile/offline unlock, and sign-out with unsynced work
@@ -16,6 +18,6 @@
 - [x] Secure password recovery forms and authenticated password changes
 - [x] Navigation loading states and graceful failure handling
 - [x] Offline snapshots, expense logging, and reconnect sync (signed-in reconnect flow verified)
-- [ ] Published offline cold-start check (blocked: published app with Neon credentials required)
+- [ ] Published Netlify deployment and native install/offline cold-start check (blocked: owner must deploy with Neon credentials and migrated tables)
 - [ ] Phase 2: assets/liabilities, portfolio, AI chat (OpenRouter key), tax estimator, investment API (your API URL/key)
 - [ ] Phase 3 ideas: see .lovable/plan/

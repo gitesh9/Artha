@@ -1,7 +1,33 @@
+[dev]
+  framework = "#custom"
+  command = "npm run dev"
+  targetPort = 5173
+  port = 8888
+  publish = "public"
+
 [build]
   command = "npm run build"
-  publish = "dist"
+  publish = "dist/client"
 
 [build.environment]
+  NODE_VERSION = "22"
   SECRETS_SCAN_OMIT_PATHS = "src/test/**,ARCHITECTURE.md"
-  
+
+# The adapter emits the SSR function with preferStatic=true. Do not add a
+# catch-all SPA redirect: it would swallow authentication and server functions.
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+    Service-Worker-Allowed = "/"
+
+[[headers]]
+  for = "/manifest.webmanifest"
+  [headers.values]
+    Content-Type = "application/manifest+json"
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/offline.html"
+  [headers.values]
+    Cache-Control = "no-cache"

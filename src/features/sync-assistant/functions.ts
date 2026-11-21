@@ -9,11 +9,11 @@ type AdviceResult =
 
 export const explainConflict = createServerFn({ method: "POST" })
   .middleware([requireUser])
-  .validator(conflictSchema)
+  .inputValidator(conflictSchema)
   .handler(async ({ data }): Promise<AdviceResult> => {
     // Read credentials and model configuration exclusively on the server.
-    const key = process.env.OPENROUTER_API_KEY;
-    const model = process.env.OPENROUTER_MODEL;
+    const key = process.env["OPENROUTER_API_KEY"];
+    const model = process.env["OPENROUTER_MODEL"];
 
     if (!key) {
       return {
