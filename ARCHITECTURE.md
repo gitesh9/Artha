@@ -46,17 +46,6 @@ drizzle/                   Generated SQL migrations
 ## How to add an external integration (AI, your investment API)
 Create `core/integrations/<name>.ts` exporting an interface + one implementation that reads its key from `process.env` inside the function. Call it only from server functions.
 
-## Environment variables
-| Name | Needed | What |
-|---|---|---|
-| DATABASE_URL | production | Neon connection string |
-| BETTER_AUTH_SECRET | production | long random string |
-| BETTER_AUTH_URL | optional | public URL of the app |
-| OPENROUTER_API_KEY | conflict assistant | Own OpenRouter key (server only) |
-| OPENROUTER_MODEL | optional | Defaults to openai/gpt-4o-mini; change to an OpenRouter model ID |
-
-Without DATABASE_URL in local dev the app uses a temporary in-memory database (data resets on restart).
-
 ## Commands
 - `bun run dev` · `bun run test`
 - `bun run db:generate` — create a migration after schema edits
