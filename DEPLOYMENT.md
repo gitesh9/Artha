@@ -14,9 +14,17 @@ Configure these variables on Netlify with **Builds and Functions** scope:
 
 Generate a secret locally using `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"`. Paste it into the hosting settings, not source code. Rotating it can invalidate existing sessions.
 
-Optional: `RESEND_API_KEY` + `PASSWORD_RESET_FROM` (verified sender) for recovery emails; `OPENROUTER_API_KEY` + `OPENROUTER_MODEL` for conflict advice. The rest of the app does not require these providers.
+Optional: `RESEND_API_KEY` + `PASSWORD_RESET_FROM` (verified sender) for recovery emails; `OPENROUTER_API_KEY` + `OPENROUTER_MODEL` for consented chat/conflict advice. The rest of the app does not require these providers. A present key is not a successful provider check; the currently checked OpenRouter key returned 401.
 
 Apply the checked-in Drizzle migrations to Neon **before first use**, using `bun run db:migrate` with `DATABASE_URL` in your local environment. This is a database change: review migrations/backups before running against real money data. In-memory preview data is not transferred to Neon.
+Apply all migrations in order, including `0001_safe_molly_hayes.sql` (planning, FX and push) and `0002_medical_sphinx.sql` (shared groups, membership, invitations and entries). Never apply only the initial migration on an expanded installation.
+
+## Evening reminders and daily exchange rates
+Configure `JOB_SECRET` (at least 32 random characters), `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, and `VAPID_SUBJECT` (a valid contact `mailto:` or HTTPS address). Generate Web Push keys locally with `npx web-push generate-vapid-keys`; keep the private key out of browser code and Git. Netlify needs these in Functions scope.
+
+The checked-in `netlify/functions/daily.ts` is a scheduled function at `30 14 * * *` UTC (8 PM Asia/Kolkata). It invokes the secret-checked `/api/public/scheduled` endpoint. Confirm the scheduled function appears and is enabled after deployment; a local preview does not prove scheduled delivery. It refreshes INR plus cached base-currency FX snapshots and sends generic reminders without financial amounts. Subscriptions to arbitrary/private endpoints are rejected; expired subscriptions are removed. Users still must enable browser notification permission in Settings and send a test. iOS Web Push requires an installed supported home-screen app. Hosting/provider limits can affect delivery.
+
+The ordinary finance app works without these keys; the reminder switch stays unavailable until configured. Password-reset delivery additionally needs a verified `PASSWORD_RESET_FROM`; no sender is currently configured. Investment suggestions remain disconnected until the owner supplies a working API contract; the provided ABC.com link was a 404.
 
 ## Deploy
 
@@ -26,7 +34,11 @@ Apply the checked-in Drizzle migrations to Neon **before first use**, using `bun
 4. The adapter generates `.netlify/v1/functions/server.mjs`. Do **not** set `dist/server` as the publish directory, drag-and-drop only `dist/client`, add a `/* /index.html 200` redirect, or run a second SSR adapter.
 5. Open `/auth`, create/sign into an account, unlock local protection, add an expense, reload and confirm it reads back. Check Netlify **function logs** for any server error; browser `content.js` video-listener messages are normally from an extension and do not diagnose an Artha 500.
 
+ALTERNATIVELY youcan run: **npx netlify deploy --build --prod**
+
 Public startup tolerates a session-service outage; sign-in and private data still require correctly configured credentials and migrated Neon tables. A styled public page is not proof the database works.
+
+Checked 21 November 2026: `https://artha98.netlify.app/` and its exact linked CSS/JS assets returned 200 with correct content types. Its manifest, service worker, 192/512 icons and offline shell also returned 200. This verifies public asset serving, not authenticated production finance flows or native installation/offline restart. Redeploy this expansion after applying all migrations; the live site is not automatically updated by saving this code.
 
 ## Local development, including Windows
 
@@ -63,3 +75,12 @@ After deployment:
 6. Sign out online; confirm other tabs lock and no financial text is visible. Encrypted pending work stays on the device until the same account unlocks it.
 
 Installation does not provide a separate backup. Never clear browser storage to fix an icon or update issue while unsynced entries remain. For a stuck worker, use `?sw=off` online to unregister the app worker without deleting the encrypted journal, then reopen the normal URL. The changed theme/icon metadata may require reinstalling an existing home-screen app; do not change its start URL to repair updates.
+
+## Held integrations and optional packaging
+- **OpenRouter:** replace the rejected key in your hosting secret settings, then redeploy. The existing key returned HTTP 401; neither AI chat nor live proposal confirmation is considered verified. Never paste private keys into chat or source.
+- **Investment suggestions:** provide a real HTTPS endpoint and request/response/authentication documentation. `abc.com/get/suggestion` is ABC Entertainment's 404 page. Manual portfolio and SIP planning work independently; no trades or invented recommendations are generated.
+- **Account Aggregator:** choose/onboard a licensed provider with an approved consent flow before adding its server adapter. There is no browser API for directly reading GPay records.
+- **Android:** the PWA is the current mobile delivery. A signed Android wrapper with direct SMS access is optional separate packaging; it needs signing, Android permissions/store policy and privacy review. Browser receipt camera and pasted SMS text work without those permissions. Do not request READ_SMS in a web manifest or claim native packaging is delivered.
+- **Tax:** only the explicitly verified historical year/cases are calculated. Future-year verification and professional review of unsupported special cases are required before widening that scope.
+
+The OCR worker, PDF worker modules/WASM and English reading data are included in offline precache. Offline parsing still requires a successfully activated worker and previously visited financial pages; validate this after deploying the latest revision.

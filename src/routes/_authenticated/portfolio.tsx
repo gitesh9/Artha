@@ -1,0 +1,18 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { planningQuery } from "@/features/planning/queries";
+import { portfolio } from "@/features/planning/service";
+import { RecordEditor } from "@/features/planning/components/RecordEditor";
+import { PageHeader, Panel } from "@/shared/components/PageHeader";
+import { financialHead, loadPlanning } from "@/shared/financial-page";
+import { PageError } from "@/shared/components/NavigationStatus";
+import { formatMoney } from "@/shared/money";
+export const Route = createFileRoute("/_authenticated/portfolio")({ head: () => financialHead("Portfolio", "Holdings, manual valuations, cashflows, gains and annualized XIRR."), loader: ({ context }) => loadPlanning(context.queryClient), errorComponent: PageError, component: Portfolio });
+function Portfolio() {
+  const { data: records } = useSuspenseQuery(planningQuery); const holdings = records.filter(r => r.kind === "holding");
+  return <><PageHeader title="Portfolio" subtitle="Stocks · mutual funds · FD · gold · PPF" /><p className="mb-6 text-sm text-muted-foreground">Manual prices, not live quotes. Gains are estimates; cashflows do not automatically create account transactions. Use matched currencies for each holding and its cashflows.</p>
+    <div className="grid gap-4 lg:grid-cols-2">{holdings.map(h => { const s = portfolio(h, records), fmt = (n: number) => formatMoney(n, h.payload.currency); return <Panel card key={h.id}><div className="flex flex-wrap justify-between gap-3"><h2 className="text-xl font-semibold">{h.payload.name}</h2><span className="text-sm text-muted-foreground">{h.payload.subtype}</span></div><p className="num mt-4 text-3xl font-semibold">{fmt(s.value)}</p><p className="mt-2 text-xs text-muted-foreground">Manual valuation · {s.valuationDate} · {s.quantity} units{s.valuationStale ? " · Stale versus cashflows; add a newer valuation" : ""}</p><dl className="mt-5 grid grid-cols-2 gap-4 text-sm">{[["Total gain / loss", fmt(s.gain)], ["Realized gain", fmt(s.realized)], ["Unrealized gain", fmt(s.unrealized)], ["Dividends / interest", fmt(s.income)], ["Remaining cost basis", fmt(s.cost)], ["Annualized XIRR", s.xirr === null ? "Unavailable · insufficient or non-convergent cashflows" : `${(s.xirr * 100).toFixed(2)}%`]].map(([label, value]) => <div key={label}><dt className="text-muted-foreground">{label}</dt><dd className="num mt-1 break-words font-medium">{value}</dd></div>)}</dl></Panel>; })}</div>
+    <RecordEditor kind="holding" title="Holdings" subtypes={["stock", "mutual-fund", "fd", "gold", "ppf"]} /><RecordEditor kind="flow" title="Cashflows and dated valuations" parentKind="holding" subtypes={["buy", "sell", "deposit", "withdraw", "dividend", "interest", "fee", "valuation"]}><p className="mt-2 text-sm text-muted-foreground">A valuation is the full current holding value, not a payment. Enter units sold for an accurate average-cost realized gain.</p></RecordEditor>
+    <Panel><h2 className="text-xl font-semibold">Totals by currency</h2>{[...new Set(holdings.map(h => h.payload.currency))].map(c => { const sums = holdings.filter(h => h.payload.currency === c).map(h => portfolio(h, records)); return <p key={c} className="mt-3 num">{c} · Value {formatMoney(sums.reduce((s, h) => s + h.value, 0), c)} · Gain {formatMoney(sums.reduce((s, h) => s + h.gain, 0), c)}</p>; })}</Panel>
+  </>;
+}

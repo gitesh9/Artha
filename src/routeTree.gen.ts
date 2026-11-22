@@ -15,13 +15,26 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as LocalVaultRouteImport } from './routes/local-vault'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedAccountsRouteImport } from './routes/_authenticated/accounts'
+import { Route as AuthenticatedAssistantRouteImport } from './routes/_authenticated/assistant'
+import { Route as AuthenticatedBackupRouteImport } from './routes/_authenticated/backup'
+import { Route as AuthenticatedBillsRouteImport } from './routes/_authenticated/bills'
 import { Route as AuthenticatedBudgetsRouteImport } from './routes/_authenticated/budgets'
 import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedGoalsRouteImport } from './routes/_authenticated/goals'
+import { Route as AuthenticatedGroupsRouteImport } from './routes/_authenticated/groups'
+import { Route as AuthenticatedImportRouteImport } from './routes/_authenticated/import'
+import { Route as AuthenticatedInsightsRouteImport } from './routes/_authenticated/insights'
+import { Route as AuthenticatedPlannerRouteImport } from './routes/_authenticated/planner'
+import { Route as AuthenticatedPortfolioRouteImport } from './routes/_authenticated/portfolio'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedSplitsRouteImport } from './routes/_authenticated/splits'
 import { Route as AuthenticatedSyncHistoryRouteImport } from './routes/_authenticated/sync-history'
+import { Route as AuthenticatedTaxRouteImport } from './routes/_authenticated/tax'
 import { Route as AuthenticatedTransactionsRouteImport } from './routes/_authenticated/transactions'
+import { Route as AuthenticatedWealthRouteImport } from './routes/_authenticated/wealth'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as ApiPublicScheduledRouteImport } from './routes/api/public/scheduled'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -52,6 +65,21 @@ const AuthenticatedAccountsRoute = AuthenticatedAccountsRouteImport.update({
   path: '/accounts',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAssistantRoute = AuthenticatedAssistantRouteImport.update({
+  id: '/assistant',
+  path: '/assistant',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedBackupRoute = AuthenticatedBackupRouteImport.update({
+  id: '/backup',
+  path: '/backup',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedBillsRoute = AuthenticatedBillsRouteImport.update({
+  id: '/bills',
+  path: '/bills',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedBudgetsRoute = AuthenticatedBudgetsRouteImport.update({
   id: '/budgets',
   path: '/budgets',
@@ -67,9 +95,44 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedGoalsRoute = AuthenticatedGoalsRouteImport.update({
+  id: '/goals',
+  path: '/goals',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedGroupsRoute = AuthenticatedGroupsRouteImport.update({
+  id: '/groups',
+  path: '/groups',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedImportRoute = AuthenticatedImportRouteImport.update({
+  id: '/import',
+  path: '/import',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedInsightsRoute = AuthenticatedInsightsRouteImport.update({
+  id: '/insights',
+  path: '/insights',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPlannerRoute = AuthenticatedPlannerRouteImport.update({
+  id: '/planner',
+  path: '/planner',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPortfolioRoute = AuthenticatedPortfolioRouteImport.update({
+  id: '/portfolio',
+  path: '/portfolio',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSplitsRoute = AuthenticatedSplitsRouteImport.update({
+  id: '/splits',
+  path: '/splits',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedSyncHistoryRoute =
@@ -78,15 +141,30 @@ const AuthenticatedSyncHistoryRoute =
     path: '/sync-history',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedTaxRoute = AuthenticatedTaxRouteImport.update({
+  id: '/tax',
+  path: '/tax',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedTransactionsRoute =
   AuthenticatedTransactionsRouteImport.update({
     id: '/transactions',
     path: '/transactions',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedWealthRoute = AuthenticatedWealthRouteImport.update({
+  id: '/wealth',
+  path: '/wealth',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicScheduledRoute = ApiPublicScheduledRouteImport.update({
+  id: '/api/public/scheduled',
+  path: '/api/public/scheduled',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -96,13 +174,26 @@ export interface FileRoutesByFullPath {
   '/local-vault': typeof LocalVaultRoute
   '/reset-password': typeof ResetPasswordRoute
   '/accounts': typeof AuthenticatedAccountsRoute
+  '/assistant': typeof AuthenticatedAssistantRoute
+  '/backup': typeof AuthenticatedBackupRoute
+  '/bills': typeof AuthenticatedBillsRoute
   '/budgets': typeof AuthenticatedBudgetsRoute
   '/calendar': typeof AuthenticatedCalendarRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/goals': typeof AuthenticatedGoalsRoute
+  '/groups': typeof AuthenticatedGroupsRoute
+  '/import': typeof AuthenticatedImportRoute
+  '/insights': typeof AuthenticatedInsightsRoute
+  '/planner': typeof AuthenticatedPlannerRoute
+  '/portfolio': typeof AuthenticatedPortfolioRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/splits': typeof AuthenticatedSplitsRoute
   '/sync-history': typeof AuthenticatedSyncHistoryRoute
+  '/tax': typeof AuthenticatedTaxRoute
   '/transactions': typeof AuthenticatedTransactionsRoute
+  '/wealth': typeof AuthenticatedWealthRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/public/scheduled': typeof ApiPublicScheduledRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -110,13 +201,26 @@ export interface FileRoutesByTo {
   '/local-vault': typeof LocalVaultRoute
   '/reset-password': typeof ResetPasswordRoute
   '/accounts': typeof AuthenticatedAccountsRoute
+  '/assistant': typeof AuthenticatedAssistantRoute
+  '/backup': typeof AuthenticatedBackupRoute
+  '/bills': typeof AuthenticatedBillsRoute
   '/budgets': typeof AuthenticatedBudgetsRoute
   '/calendar': typeof AuthenticatedCalendarRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/goals': typeof AuthenticatedGoalsRoute
+  '/groups': typeof AuthenticatedGroupsRoute
+  '/import': typeof AuthenticatedImportRoute
+  '/insights': typeof AuthenticatedInsightsRoute
+  '/planner': typeof AuthenticatedPlannerRoute
+  '/portfolio': typeof AuthenticatedPortfolioRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/splits': typeof AuthenticatedSplitsRoute
   '/sync-history': typeof AuthenticatedSyncHistoryRoute
+  '/tax': typeof AuthenticatedTaxRoute
   '/transactions': typeof AuthenticatedTransactionsRoute
+  '/wealth': typeof AuthenticatedWealthRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/public/scheduled': typeof ApiPublicScheduledRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -126,13 +230,26 @@ export interface FileRoutesById {
   '/local-vault': typeof LocalVaultRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/accounts': typeof AuthenticatedAccountsRoute
+  '/_authenticated/assistant': typeof AuthenticatedAssistantRoute
+  '/_authenticated/backup': typeof AuthenticatedBackupRoute
+  '/_authenticated/bills': typeof AuthenticatedBillsRoute
   '/_authenticated/budgets': typeof AuthenticatedBudgetsRoute
   '/_authenticated/calendar': typeof AuthenticatedCalendarRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/goals': typeof AuthenticatedGoalsRoute
+  '/_authenticated/groups': typeof AuthenticatedGroupsRoute
+  '/_authenticated/import': typeof AuthenticatedImportRoute
+  '/_authenticated/insights': typeof AuthenticatedInsightsRoute
+  '/_authenticated/planner': typeof AuthenticatedPlannerRoute
+  '/_authenticated/portfolio': typeof AuthenticatedPortfolioRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/splits': typeof AuthenticatedSplitsRoute
   '/_authenticated/sync-history': typeof AuthenticatedSyncHistoryRoute
+  '/_authenticated/tax': typeof AuthenticatedTaxRoute
   '/_authenticated/transactions': typeof AuthenticatedTransactionsRoute
+  '/_authenticated/wealth': typeof AuthenticatedWealthRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/public/scheduled': typeof ApiPublicScheduledRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -142,13 +259,26 @@ export interface FileRouteTypes {
     | '/local-vault'
     | '/reset-password'
     | '/accounts'
+    | '/assistant'
+    | '/backup'
+    | '/bills'
     | '/budgets'
     | '/calendar'
     | '/dashboard'
+    | '/goals'
+    | '/groups'
+    | '/import'
+    | '/insights'
+    | '/planner'
+    | '/portfolio'
     | '/settings'
+    | '/splits'
     | '/sync-history'
+    | '/tax'
     | '/transactions'
+    | '/wealth'
     | '/api/auth/$'
+    | '/api/public/scheduled'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -156,13 +286,26 @@ export interface FileRouteTypes {
     | '/local-vault'
     | '/reset-password'
     | '/accounts'
+    | '/assistant'
+    | '/backup'
+    | '/bills'
     | '/budgets'
     | '/calendar'
     | '/dashboard'
+    | '/goals'
+    | '/groups'
+    | '/import'
+    | '/insights'
+    | '/planner'
+    | '/portfolio'
     | '/settings'
+    | '/splits'
     | '/sync-history'
+    | '/tax'
     | '/transactions'
+    | '/wealth'
     | '/api/auth/$'
+    | '/api/public/scheduled'
   id:
     | '__root__'
     | '/'
@@ -171,13 +314,26 @@ export interface FileRouteTypes {
     | '/local-vault'
     | '/reset-password'
     | '/_authenticated/accounts'
+    | '/_authenticated/assistant'
+    | '/_authenticated/backup'
+    | '/_authenticated/bills'
     | '/_authenticated/budgets'
     | '/_authenticated/calendar'
     | '/_authenticated/dashboard'
+    | '/_authenticated/goals'
+    | '/_authenticated/groups'
+    | '/_authenticated/import'
+    | '/_authenticated/insights'
+    | '/_authenticated/planner'
+    | '/_authenticated/portfolio'
     | '/_authenticated/settings'
+    | '/_authenticated/splits'
     | '/_authenticated/sync-history'
+    | '/_authenticated/tax'
     | '/_authenticated/transactions'
+    | '/_authenticated/wealth'
     | '/api/auth/$'
+    | '/api/public/scheduled'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -187,6 +343,7 @@ export interface RootRouteChildren {
   LocalVaultRoute: typeof LocalVaultRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiPublicScheduledRoute: typeof ApiPublicScheduledRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -233,6 +390,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccountsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/assistant': {
+      id: '/_authenticated/assistant'
+      path: '/assistant'
+      fullPath: '/assistant'
+      preLoaderRoute: typeof AuthenticatedAssistantRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/backup': {
+      id: '/_authenticated/backup'
+      path: '/backup'
+      fullPath: '/backup'
+      preLoaderRoute: typeof AuthenticatedBackupRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/bills': {
+      id: '/_authenticated/bills'
+      path: '/bills'
+      fullPath: '/bills'
+      preLoaderRoute: typeof AuthenticatedBillsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/budgets': {
       id: '/_authenticated/budgets'
       path: '/budgets'
@@ -254,11 +432,60 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/goals': {
+      id: '/_authenticated/goals'
+      path: '/goals'
+      fullPath: '/goals'
+      preLoaderRoute: typeof AuthenticatedGoalsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/groups': {
+      id: '/_authenticated/groups'
+      path: '/groups'
+      fullPath: '/groups'
+      preLoaderRoute: typeof AuthenticatedGroupsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/import': {
+      id: '/_authenticated/import'
+      path: '/import'
+      fullPath: '/import'
+      preLoaderRoute: typeof AuthenticatedImportRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/insights': {
+      id: '/_authenticated/insights'
+      path: '/insights'
+      fullPath: '/insights'
+      preLoaderRoute: typeof AuthenticatedInsightsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/planner': {
+      id: '/_authenticated/planner'
+      path: '/planner'
+      fullPath: '/planner'
+      preLoaderRoute: typeof AuthenticatedPlannerRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/portfolio': {
+      id: '/_authenticated/portfolio'
+      path: '/portfolio'
+      fullPath: '/portfolio'
+      preLoaderRoute: typeof AuthenticatedPortfolioRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/settings': {
       id: '/_authenticated/settings'
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/splits': {
+      id: '/_authenticated/splits'
+      path: '/splits'
+      fullPath: '/splits'
+      preLoaderRoute: typeof AuthenticatedSplitsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/sync-history': {
@@ -268,11 +495,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSyncHistoryRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/tax': {
+      id: '/_authenticated/tax'
+      path: '/tax'
+      fullPath: '/tax'
+      preLoaderRoute: typeof AuthenticatedTaxRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/transactions': {
       id: '/_authenticated/transactions'
       path: '/transactions'
       fullPath: '/transactions'
       preLoaderRoute: typeof AuthenticatedTransactionsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/wealth': {
+      id: '/_authenticated/wealth'
+      path: '/wealth'
+      fullPath: '/wealth'
+      preLoaderRoute: typeof AuthenticatedWealthRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/api/auth/$': {
@@ -282,27 +523,58 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/scheduled': {
+      id: '/api/public/scheduled'
+      path: '/api/public/scheduled'
+      fullPath: '/api/public/scheduled'
+      preLoaderRoute: typeof ApiPublicScheduledRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAccountsRoute: typeof AuthenticatedAccountsRoute
+  AuthenticatedAssistantRoute: typeof AuthenticatedAssistantRoute
+  AuthenticatedBackupRoute: typeof AuthenticatedBackupRoute
+  AuthenticatedBillsRoute: typeof AuthenticatedBillsRoute
   AuthenticatedBudgetsRoute: typeof AuthenticatedBudgetsRoute
   AuthenticatedCalendarRoute: typeof AuthenticatedCalendarRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedGoalsRoute: typeof AuthenticatedGoalsRoute
+  AuthenticatedGroupsRoute: typeof AuthenticatedGroupsRoute
+  AuthenticatedImportRoute: typeof AuthenticatedImportRoute
+  AuthenticatedInsightsRoute: typeof AuthenticatedInsightsRoute
+  AuthenticatedPlannerRoute: typeof AuthenticatedPlannerRoute
+  AuthenticatedPortfolioRoute: typeof AuthenticatedPortfolioRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedSplitsRoute: typeof AuthenticatedSplitsRoute
   AuthenticatedSyncHistoryRoute: typeof AuthenticatedSyncHistoryRoute
+  AuthenticatedTaxRoute: typeof AuthenticatedTaxRoute
   AuthenticatedTransactionsRoute: typeof AuthenticatedTransactionsRoute
+  AuthenticatedWealthRoute: typeof AuthenticatedWealthRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAccountsRoute: AuthenticatedAccountsRoute,
+  AuthenticatedAssistantRoute: AuthenticatedAssistantRoute,
+  AuthenticatedBackupRoute: AuthenticatedBackupRoute,
+  AuthenticatedBillsRoute: AuthenticatedBillsRoute,
   AuthenticatedBudgetsRoute: AuthenticatedBudgetsRoute,
   AuthenticatedCalendarRoute: AuthenticatedCalendarRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedGoalsRoute: AuthenticatedGoalsRoute,
+  AuthenticatedGroupsRoute: AuthenticatedGroupsRoute,
+  AuthenticatedImportRoute: AuthenticatedImportRoute,
+  AuthenticatedInsightsRoute: AuthenticatedInsightsRoute,
+  AuthenticatedPlannerRoute: AuthenticatedPlannerRoute,
+  AuthenticatedPortfolioRoute: AuthenticatedPortfolioRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedSplitsRoute: AuthenticatedSplitsRoute,
   AuthenticatedSyncHistoryRoute: AuthenticatedSyncHistoryRoute,
+  AuthenticatedTaxRoute: AuthenticatedTaxRoute,
   AuthenticatedTransactionsRoute: AuthenticatedTransactionsRoute,
+  AuthenticatedWealthRoute: AuthenticatedWealthRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -315,6 +587,7 @@ const rootRouteChildren: RootRouteChildren = {
   LocalVaultRoute: LocalVaultRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiPublicScheduledRoute: ApiPublicScheduledRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

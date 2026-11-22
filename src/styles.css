@@ -160,7 +160,8 @@
     outline: 2px solid var(--ring);
     outline-offset: 4px;
   }
-  select { min-height: 44px; }
+  select { min-height: 44px; max-width: 100%; min-width: 0; }
+  form > label { min-width: 0; }
   button, summary { cursor: pointer; }
   summary { min-height: 44px; }
   .recharts-default-tooltip { background: var(--popover) !important; border-color: var(--border) !important; border-radius: var(--radius); color: var(--foreground); }

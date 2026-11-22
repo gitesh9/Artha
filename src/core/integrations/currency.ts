@@ -2,7 +2,7 @@
  * Currency adapter. Swap the provider by implementing RatesProvider.
  * Default: Frankfurter (free, no key, ECB data). Rates are cached per server instance for 6h.
  */
-export type Rates = { base: string; date: string; rates: Record<string, number> };
+export type Rates = { base: string; date: string; rates: Record<string, number>; source?: string; stale?: boolean };
 
 export interface RatesProvider {
   latest(base: string): Promise<Rates>;
@@ -10,27 +10,39 @@ export interface RatesProvider {
 
 export const frankfurterProvider: RatesProvider = {
   async latest(base) {
-    const res = await fetch(`https://api.frankfurter.app/latest?from=${encodeURIComponent(base)}`);
+    const res = await fetch(`https://api.frankfurter.app/latest?from=${encodeURIComponent(base)}`, { signal: AbortSignal.timeout(10000) });
     if (!res.ok) throw new Error(`Rates request failed: ${res.status}`);
     const json = (await res.json()) as Rates;
-    return { ...json, rates: { ...json.rates, [base]: 1 } };
+    if (!json.date || !json.rates || Object.values(json.rates).some(r => !Number.isFinite(r) || r <= 0)) throw new Error("Invalid exchange rates");
+    return { ...json, source: "Frankfurter / ECB", stale: false, rates: { ...json.rates, [base]: 1 } };
   },
 };
 
 const cache = new Map<string, { at: number; value: Rates }>();
 const TTL = 6 * 60 * 60 * 1000;
 
-export async function getRates(base: string, provider: RatesProvider = frankfurterProvider): Promise<Rates> {
+export async function getRates(base: string, provider: RatesProvider = frankfurterProvider, forceRefresh = false): Promise<Rates> {
   const hit = cache.get(base);
-  if (hit && Date.now() - hit.at < TTL) return hit.value;
+  if (!forceRefresh && hit && Date.now() - hit.at < TTL) return hit.value;
+  let saved: Rates | undefined;
+  if (provider === frankfurterProvider) {
+    try {
+      const { getDb } = await import("@/core/db/client"); const { fxSnapshot } = await import("@/core/db/schema"); const { eq } = await import("drizzle-orm");
+      const row = (await (await getDb()).select().from(fxSnapshot).where(eq(fxSnapshot.base, base)).limit(1))[0];
+      if (row) { saved = { base, date: row.rateDate, rates: row.rates, source: "Frankfurter / ECB", stale: true }; if (!forceRefresh && Date.now() - row.refreshedAt.getTime() < 86400000) return { ...saved, stale: false }; }
+    } catch { /* A not-yet-migrated deployment can still fetch fresh public rates. */ }
+  }
   try {
     const value = await provider.latest(base);
     cache.set(base, { at: Date.now(), value });
+    if (provider === frankfurterProvider) {
+      try { const { getDb } = await import("@/core/db/client"); const { fxSnapshot } = await import("@/core/db/schema"); await (await getDb()).insert(fxSnapshot).values({ base, rateDate: value.date, rates: value.rates }).onConflictDoUpdate({ target: fxSnapshot.base, set: { rateDate: value.date, rates: value.rates, refreshedAt: new Date() } }); } catch { /* Fresh rates remain usable if cache persistence fails. */ }
+    }
     return value;
   } catch (e) {
-    if (hit) return hit.value; // stale is better than nothing
-    console.error(e);
-    return { base, date: "", rates: { [base]: 1 } };
+    if (hit) return { ...hit.value, stale: true };
+    if (saved) return saved;
+    return { base, date: "", rates: { [base]: 1 }, source: "Base currency only — exchange service unavailable", stale: true };
   }
 }
 

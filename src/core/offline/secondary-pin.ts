@@ -1,0 +1,7 @@
+import { readEncrypted, writeEncrypted, lockVaults } from "./vault";
+type Config = { salt: number[]; verifier: number[] };
+const key = (id: string) => `artha:secondary-pin:v1:${id}`;
+async function digest(pin: string, salt: number[]) { const material = await crypto.subtle.importKey("raw", new TextEncoder().encode(pin), "PBKDF2", false, ["deriveBits"]); return [...new Uint8Array(await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt: new Uint8Array(salt), iterations: 600000 }, material, 256))]; }
+export async function configurePin(id: string, pin: string) { if (!/^\d{6,12}$/.test(pin)) throw new Error("Use 6–12 digits."); const salt = [...crypto.getRandomValues(new Uint8Array(16))]; await writeEncrypted(id, key(id), { salt, verifier: await digest(pin, salt) }); }
+export async function verifySecondaryPin(id: string, pin: string) { try { const config = await readEncrypted<Config | null>(id, key(id)); if (!config) return; const actual = await digest(pin, config.salt); let mismatch = 0; actual.forEach((n, i) => { mismatch |= n ^ (config.verifier[i] ?? -1); }); if (mismatch) throw new Error("Secondary PIN did not match. Both the device passphrase and PIN are required."); } catch (error) { lockVaults(); throw error; } }
+export async function disablePin(id: string) { await writeEncrypted(id, key(id), null); }

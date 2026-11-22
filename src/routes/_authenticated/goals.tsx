@@ -1,0 +1,11 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { planningQuery } from "@/features/planning/queries";
+import { RecordEditor } from "@/features/planning/components/RecordEditor";
+import { PageHeader, Panel } from "@/shared/components/PageHeader";
+import { Button } from "@/components/ui/button";
+import { formatMoney } from "@/shared/money";
+import { financialHead, loadPlanning } from "@/shared/financial-page";
+import { PageError } from "@/shared/components/NavigationStatus";
+export const Route = createFileRoute("/_authenticated/goals")({ head: () => financialHead("Goals", "Savings targets, allocated money and dated contributions."), loader: ({ context }) => loadPlanning(context.queryClient), errorComponent: PageError, component: Goals });
+function Goals() { const { data: records } = useSuspenseQuery(planningQuery); return <><PageHeader title="Goals" subtitle="Give your savings a destination" actions={<Button asChild variant="outline"><Link to="/planner">Calculate a goal budget</Link></Button>} /><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{records.filter(r => r.kind === "goal").map(g => { const p = g.payload, saved = p.amountMinor + records.filter(r => r.kind === "contribution" && r.payload.linkedId === g.id && r.payload.currency === p.currency).reduce((s, r) => s + r.payload.amountMinor, 0), ratio = p.targetMinor > 0 ? saved / p.targetMinor : 0; return <Panel card key={g.id}><h2 className="text-xl font-semibold">{p.name}</h2><p className="mt-2 text-sm text-muted-foreground">Target · {p.date}</p><p className="num mt-4 text-xl">{formatMoney(saved, p.currency)} / {formatMoney(p.targetMinor, p.currency)}</p><progress className="mt-4 h-3 w-full accent-primary" max={100} value={Math.min(100, ratio * 100)} aria-label={`${p.name} progress`} /><p className="mt-2 text-sm">{(ratio * 100).toFixed(1)}% allocated · {formatMoney(Math.max(0, p.targetMinor - saved), p.currency)} remaining</p></Panel>; })}</div><RecordEditor kind="goal" title="Savings goals" /><RecordEditor kind="contribution" title="Contributions" parentKind="goal"><p className="mt-2 text-sm text-muted-foreground">Allocations do not move account balances or create expenses. Use the goal's currency.</p></RecordEditor></>; }

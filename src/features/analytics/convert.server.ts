@@ -8,12 +8,13 @@ import type { BaseTx } from "./service";
 
 export async function loadBaseTransactions(db: Db, userId: string, f: TxFilter) {
   const { baseCurrency } = await settingsRepo.get(db, userId);
-  const [rows, rates] = await Promise.all([transactionsRepo.list(db, userId, f, 100000), getRates(baseCurrency)]);
+  const [rows, rates] = await Promise.all([transactionsRepo.list(db, userId, f, 100001), getRates(baseCurrency)]);
+  if (rows.length > 100000) throw new Error("This report exceeds its safe entry limit. Narrow the dates; no incomplete total is shown.");
   const txs: BaseTx[] = rows.map((r) => ({
     kind: r.kind,
     category: r.category,
     occurredOn: String(r.occurredOn),
-    amountMinor: convertMinor(r.amountMinor, r.currency, baseCurrency, rates, minorFactor) ?? 0,
+    amountMinor: (() => { const converted = convertMinor(r.amountMinor, r.currency, baseCurrency, rates, minorFactor); if (converted === null) throw new Error(`No exchange rate for ${r.currency}. Original entries are safe; retry rates before viewing this report.`); return converted; })(),
   }));
-  return { baseCurrency, txs };
+  return { baseCurrency, txs, rateInfo: { date: rates.date, source: rates.source ?? "Frankfurter / ECB", stale: rates.stale ?? false } };
 }

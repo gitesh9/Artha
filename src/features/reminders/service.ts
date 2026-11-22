@@ -1,0 +1,4 @@
+import { z } from "zod";
+export const pushInput = z.object({ endpoint: z.string().url().max(4096), expirationTime: z.number().nullable().default(null), keys: z.object({ p256dh: z.string().min(16).max(512), auth: z.string().min(8).max(256) }) });
+export function allowedPushEndpoint(endpoint: string) { const url = new URL(endpoint); return url.protocol === "https:" && !url.port && !url.username && !url.password && ["fcm.googleapis.com", "web.push.apple.com", "updates.push.services.mozilla.com", "push.services.mozilla.com", "notify.windows.com", "wns.windows.com"].some(h => url.hostname === h || url.hostname.endsWith(`.${h}`)); }
+export function istReminderDate(now: Date) { const ist = new Date(now.getTime() + 330 * 60000); return ist.getUTCHours() === 20 ? ist.toISOString().slice(0, 10) : null; }

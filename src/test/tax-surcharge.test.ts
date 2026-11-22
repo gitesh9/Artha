@@ -1,0 +1,8 @@
+import { it, expect } from "vitest";
+import { estimateTax, advanceTaxPlan, type TaxInput } from "@/features/tax/service";
+const base: TaxInput = { salary: 0, other: 0, c80: 0, dSelf: 0, dParents: 0, parentsSenior: false, nps: 0, employerNps: 0, exemptions: 0, stcg: 0, ltcg: 0, year: "2025-26" };
+it("ordinary old-regime tax at exactly fifty lakh has no surcharge", () => expect(estimateTax({ ...base, other: 500000000 }, "old")).toMatchObject({ available: true, normal: 131250000, surcharge: 0, total: 136500000 }));
+it("marginal relief at fifty lakh plus five hundred caps tax before cess to threshold tax plus excess", () => expect(estimateTax({ ...base, other: 500050000 }, "old")).toMatchObject({ available: true, surcharge: 35000, total: 136552000 }));
+it("new-regime ordinary surcharge is capped at twenty five percent above five crore", () => { const r = estimateTax({ ...base, other: 6000000000 }, "new"); if (!r.available) throw new Error(r.reason); expect(r.surcharge).toBe(Math.round(r.normal * .25)); });
+it("mixed high-income capital gains remain explicitly unsupported", () => expect(estimateTax({ ...base, other: 600000000, stcg: 100 }, "new").available).toBe(false));
+it("advance-tax threshold is ten thousand rupees after credits with cumulative fifteen percent in June", () => { expect(advanceTaxPlan(1500000, 500000, "2025-26")).toMatchObject({ required: true, remaining: 1000000 }); expect(advanceTaxPlan(1500000, 500000, "2025-26").installments[0]).toEqual({ date: "2025-06-15", cumulative: 15, amountMinor: 150000 }); expect(advanceTaxPlan(999999, 0, "2025-26").required).toBe(false); });

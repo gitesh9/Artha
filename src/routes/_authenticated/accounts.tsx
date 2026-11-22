@@ -33,9 +33,9 @@ function Accounts() {
   const { data = [] } = useQuery({ queryKey: qk.accounts, queryFn: () => listAccounts() });
   const settings = useQuery({ queryKey: qk.settings, queryFn: () => getSettings() });
   const base = settings.data?.baseCurrency ?? "INR";
-  const total = settings.data
-    ? data.reduce((s, a) => s + (convertMinor(a.balanceMinor, a.currency, base, settings.data.rates, minorFactor) ?? 0), 0)
-    : 0;
+  const converted = settings.data ? data.map(a => convertMinor(a.balanceMinor, a.currency, base, settings.data.rates, minorFactor)) : [];
+  const missing = converted.some(n => n === null);
+  const total = converted.reduce<number>((s, n) => s + (n ?? 0), 0);
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -54,7 +54,7 @@ function Accounts() {
 
   return (
     <>
-      <PageHeader title="Accounts" subtitle={`Total balance ${formatMoney(total, base)}`} />
+      <PageHeader title="Accounts" subtitle={missing ? "Total unavailable · missing exchange rate; original balances remain below" : `Total balance ${formatMoney(total, base)}${settings.data?.rates.stale ? " · Stale FX rates" : ""}`} />
       <Panel className="mb-4">
         <form onSubmit={onSubmit} className="flex flex-wrap items-end gap-3">
           <label className="grid w-full gap-2 text-sm sm:w-56">Account name<Input name="name" required placeholder="e.g. HDFC Savings" /></label>

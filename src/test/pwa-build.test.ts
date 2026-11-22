@@ -36,6 +36,9 @@ describe("offline startup privacy", () => {
       writeFile(join(fixture, "dashboard.html"), "private financial page"),
       writeFile(join(fixture, "snapshot.json"), "private financial snapshot"),
       writeFile(join(fixture, "app-hashed.js"), "export const app = true"),
+      writeFile(join(fixture, "pdf-worker.mjs"), "export const reader = true"),
+      writeFile(join(fixture, "ocr.wasm"), new Uint8Array([0, 97, 115, 109])),
+      writeFile(join(fixture, "eng.traineddata.gz"), "reading data fixture"),
     ]);
     await generateSW({ ...offlineBuildOptions.workbox, globDirectory: fixture, swDest: join(fixture, "sw.js") });
     const worker = await readFile(join(fixture, "sw.js"), "utf8");
@@ -43,5 +46,8 @@ describe("offline startup privacy", () => {
     expect(worker).toContain(createHash("md5").update(shell).digest("hex"));
     expect(worker).not.toContain("dashboard.html");
     expect(worker).not.toContain("snapshot.json");
+    expect(worker).toContain("pdf-worker.mjs");
+    expect(worker).toContain("ocr.wasm");
+    expect(worker).toContain("eng.traineddata.gz");
   }, 30000);
 });

@@ -2,13 +2,14 @@ import { and, desc, eq, gte, ilike, lte, sql, type SQL } from "drizzle-orm";
 import type { Db } from "@/core/db/client";
 import { transaction } from "@/core/db/schema";
 
-export type TxFilter = { from?: string | null | undefined; to?: string | null | undefined; kind?: string | undefined; category?: string | undefined; search?: string | undefined };
+export type TxFilter = { from?: string | null | undefined; to?: string | null | undefined; kind?: string | undefined; category?: string | undefined; search?: string | undefined; accountId?: string | undefined };
 
 function where(userId: string, f: TxFilter): SQL | undefined {
   const c: (SQL | undefined)[] = [eq(transaction.userId, userId)];
   if (f.from) c.push(gte(transaction.occurredOn, f.from));
   if (f.to) c.push(lte(transaction.occurredOn, f.to));
   if (f.kind) c.push(eq(transaction.kind, f.kind));
+  if (f.accountId) c.push(eq(transaction.accountId, f.accountId));
   if (f.category) c.push(eq(transaction.category, f.category));
   if (f.search) c.push(ilike(transaction.note, `%${f.search}%`));
   return and(...c);

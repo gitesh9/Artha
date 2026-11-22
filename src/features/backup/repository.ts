@@ -1,0 +1,17 @@
+import type { Db } from "@/core/db/client";
+import type { FinancialBackup } from "./schema";
+export async function restoreBackup(db: Db, userId: string, backup: FinancialBackup) {
+  const { moneyAccount, transaction, financeRecord, budget } = await import("@/core/db/schema"); const { atomicWrite } = await import("@/core/db/atomic.server"); const { settingsRepo } = await import("../settings/repository"); const { getRates, convertMinor } = await import("@/core/integrations/currency"); const { minorFactor } = await import("@/shared/money");
+  async function remap(kind: string, id: string) { const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`${userId}|${backup.id}|${kind}|${id}`))); digest[6] = ((digest[6] ?? 0) & 15) | 64; digest[8] = ((digest[8] ?? 0) & 63) | 128; const hex = [...digest.slice(0, 16)].map(n => n.toString(16).padStart(2, "0")).join(""); return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`; }
+  const accountIds = new Map<string, string>(), recordIds = new Map<string, string>();
+  for (const a of backup.accounts) accountIds.set(a.id, await remap("account", a.id));
+  for (const r of backup.records) recordIds.set(r.id, await remap("record", r.id));
+  const accounts = backup.accounts.map(a => { const id = accountIds.get(a.id); if (!id) throw new Error("Account mapping failed"); return { ...a, id, userId: userId }; });
+  const transactions = await Promise.all(backup.transactions.map(async t => { const accountId = accountIds.get(t.accountId); if (!accountId) throw new Error("Invalid account reference"); return { ...t, id: await remap("transaction", t.id), accountId, userId: userId }; }));
+  const records = backup.records.map(r => { const id = recordIds.get(r.id); if (!id) throw new Error("Invalid record"); const linkedId = r.payload.linkedId ? recordIds.get(r.payload.linkedId) : undefined; const accountId = r.payload.accountId ? accountIds.get(r.payload.accountId) : undefined; return { id, kind: r.kind, userId: userId, payload: { ...r.payload, ...(linkedId ? { linkedId } : {}), ...(accountId ? { accountId } : {}) } }; });
+  const settings = await settingsRepo.get(db, userId), rates = backup.baseCurrency === settings.baseCurrency ? null : await getRates(backup.baseCurrency);
+  const budgets = await Promise.all(backup.budgets.map(async b => { const monthlyLimitMinor = rates ? convertMinor(b.monthlyLimitMinor, backup.baseCurrency, settings.baseCurrency, rates, minorFactor) : b.monthlyLimitMinor; if (monthlyLimitMinor === null) throw new Error("Exchange rates unavailable for restored budgets. Nothing was restored; retry online."); return { id: await remap("budget", b.category), userId: userId, category: b.category, monthlyLimitMinor }; }));
+  const chunks = <T,>(rows: T[]) => Array.from({ length: Math.ceil(rows.length / 500) }, (_, i) => rows.slice(i * 500, (i + 1) * 500));
+  await atomicWrite(db, tx => [...chunks(accounts).map(rows => tx.insert(moneyAccount).values(rows).onConflictDoNothing()), ...chunks(transactions).map(rows => tx.insert(transaction).values(rows).onConflictDoNothing()), ...chunks(records).map(rows => tx.insert(financeRecord).values(rows).onConflictDoNothing()), ...chunks(budgets).map(rows => tx.insert(budget).values(rows).onConflictDoNothing())]);
+  return { ok: true, note: "Accounts, entries and planning records appended. Missing category budgets restored; existing budgets and currency preference were not overwritten. Retry the same backup safely." };
+}

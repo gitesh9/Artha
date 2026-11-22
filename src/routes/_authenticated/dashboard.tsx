@@ -1,20 +1,21 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { ArrowDownLeft, ArrowUpRight, Percent, Wallet } from "lucide-react";
 import { useState, useTransition } from "react";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { getDashboard } from "@/features/analytics/functions";
-import { RANGES, type RangeKey } from "@/shared/dates";
+import { RANGES, toISODate, type RangeKey } from "@/shared/dates";
 import { formatMoney, fromMinor, minorFactor } from "@/shared/money";
 import { qk } from "@/shared/queries";
 import { PageHeader, Panel } from "@/shared/components/PageHeader";
 import { PageError } from "@/shared/components/NavigationStatus";
 import { requireSavedData } from "@/shared/query-loading";
 import { useOffline } from "@/core/offline/OfflineProvider";
+import { Input } from "@/components/ui/input";
 
-const dashQuery = (range: RangeKey) =>
-  queryOptions({ queryKey: qk.dashboard(range), queryFn: () => getDashboard({ data: { range } }) });
+const dashQuery = (range: RangeKey, custom: { from: string; to: string } | null = null) =>
+  queryOptions({ queryKey: custom ? ["money", "dashboard", range, custom] : qk.dashboard(range), queryFn: () => getDashboard({ data: { range, ...(custom ?? {}) } }) });
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Overview — Artha" }, { name: "description", content: "Your money flow at a glance." }, { property: "og:title", content: "Overview — Artha" }, { property: "og:description", content: "Your money flow at a glance." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
@@ -28,8 +29,10 @@ function Dashboard() {
   const { online } = useOffline();
   const qc = useQueryClient();
   const [range, setRange] = useState<RangeKey>("1M");
+  const [custom, setCustom] = useState<{ from: string; to: string } | null>(null);
+  const [dates, setDates] = useState({ from: `${toISODate(new Date()).slice(0, 7)}-01`, to: toISODate(new Date()) });
   const [isPending, startTransition] = useTransition();
-  const { data, isFetching } = useSuspenseQuery(dashQuery(range));
+  const { data, isFetching } = useSuspenseQuery(dashQuery(range, custom));
   const cur = data.baseCurrency;
   const fmt = (m: number) => formatMoney(m, cur);
   const trend = data.trend.map((d) => ({ ...d, income: fromMinor(d.income, cur), expense: fromMinor(d.expense, cur) }));
@@ -46,11 +49,14 @@ function Dashboard() {
         actions={
           <div role="group" aria-label="Report period" className="flex flex-wrap gap-1">
             {RANGES.map((r) => (
-              <Button disabled={!online && qc.getQueryData(qk.dashboard(r)) === undefined} title={!online && qc.getQueryData(qk.dashboard(r)) === undefined ? "Reconnect to load this period" : undefined} variant={range === r ? "secondary" : "ghost"} aria-pressed={range === r} size="sm" key={r} onClick={() => startTransition(() => setRange(r))}
+              <Button disabled={!online && qc.getQueryData(qk.dashboard(r)) === undefined} title={!online && qc.getQueryData(qk.dashboard(r)) === undefined ? "Reconnect to load this period" : undefined} variant={range === r ? "secondary" : "ghost"} aria-pressed={range === r} size="sm" key={r} onClick={() => startTransition(() => { setCustom(null); setRange(r); })}
                 className={`num rounded-md px-3 py-1 text-xs ${range === r ? "bg-card shadow-sm" : "text-muted-foreground"}`}>{r}</Button>
             ))}
           </div>
         } />
+      <form className="mb-5 flex flex-wrap items-end gap-3" onSubmit={e => { e.preventDefault(); startTransition(() => setCustom(dates)); }}><label className="grid gap-2 text-sm">Custom from<Input type="date" required max={dates.to} value={dates.from} onChange={e => setDates(v => ({ ...v, from: e.target.value }))} /></label><label className="grid gap-2 text-sm">Custom to<Input type="date" required min={dates.from} value={dates.to} onChange={e => setDates(v => ({ ...v, to: e.target.value }))} /></label><Button variant="outline" disabled={!online || isPending}>Apply dates</Button><Button asChild variant="ghost"><Link to="/insights">Compare expenses</Link></Button></form>
+      <p className="mb-4 text-xs text-muted-foreground">{custom ? `${custom.from} – ${custom.to} · ` : ""}FX: {data.rateInfo?.source ?? "Frankfurter / ECB"} · {data.rateInfo?.date || "base currency only"}{data.rateInfo?.stale ? " · Stale rates" : ""}</p>
+      {data.trend.length === 0 && <div className="mb-5 flex flex-wrap items-center justify-between gap-4 border-y py-6"><div><h2 className="text-xl font-semibold">Start your money picture</h2><p className="mt-2 text-sm text-muted-foreground">Add an account, then log income or an expense. Your first entry brings these reports to life.</p></div><div className="flex gap-3"><Button asChild><Link to="/accounts">Add an account</Link></Button><Button asChild variant="outline"><Link to="/import">Import a statement</Link></Button></div></div>}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Stat icon={ArrowDownLeft} label="Income" value={fmt(data.income)} tone="text-income" />
         <Stat icon={ArrowUpRight} label="Spent" value={fmt(data.expense)} tone="text-expense" />

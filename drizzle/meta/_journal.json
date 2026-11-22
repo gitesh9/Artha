@@ -8,6 +8,20 @@
       "when": 1795257113211,
       "tag": "0000_fast_famine",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1795293560936,
+      "tag": "0001_safe_molly_hayes",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795295299979,
+      "tag": "0002_medical_sphinx",
+      "breakpoints": true
     }
   ]
 }

@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { useOffline } from "@/core/offline/OfflineProvider";
 import { PageError } from "@/shared/components/NavigationStatus";
 import { requireSavedData } from "@/shared/query-loading";
+import { useDraft } from "@/shared/components/DraftProvider";
 
 export const Route = createFileRoute("/_authenticated/budgets")({
   head: () => ({ meta: [{ title: "Budgets — Artha" }, { name: "description", content: "Monthly limits per category with overspend warnings." }, { property: "og:title", content: "Budgets — Artha" }, { property: "og:description", content: "Monthly limits per category with overspend warnings." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
@@ -25,10 +26,11 @@ export const Route = createFileRoute("/_authenticated/budgets")({
 const TONE = { ok: "bg-income", warning: "bg-warning", over: "bg-expense" } as const;
 
 function Budgets() {
+  const { draft, setDraft } = useDraft();
   const qc = useQueryClient();
   const { online } = useOffline();
   const [busy, setBusy] = useState(false);
-  const [category, setCategory] = useState<string>(EXPENSE_CATEGORIES[0]);
+  const [category, setCategory] = useState<string>(draft?.target === "budgets" && EXPENSE_CATEGORIES.some(c => c === draft.draft.category) ? draft.draft.category ?? EXPENSE_CATEGORIES[0] : EXPENSE_CATEGORIES[0]);
   const { data } = useQuery({ queryKey: qk.budgets, queryFn: () => listBudgets() });
   const refresh = () => qc.invalidateQueries({ queryKey: qk.budgets });
 
@@ -38,7 +40,7 @@ function Budgets() {
     const limit = Number(new FormData(form).get("limit"));
     if (!online || busy) return;
     setBusy(true);
-    try { await saveBudget({ data: { category, limit } }); await refresh(); toast.success("Budget saved"); form.reset(); }
+    try { await saveBudget({ data: { category, limit } }); await refresh(); setDraft(null); toast.success("Budget saved"); form.reset(); }
     catch (err) { toast.error(err instanceof Error ? err.message : "Could not save"); }
     finally { setBusy(false); }
   }
@@ -52,7 +54,7 @@ function Budgets() {
           <label className="grid gap-2 text-sm">Category<select className="h-9 rounded-md border bg-background px-2 text-sm" value={category} onChange={(e) => setCategory(e.target.value)} aria-label="Category">
             {EXPENSE_CATEGORIES.map((c) => <option key={c}>{c}</option>)}
           </select></label>
-          <label className="grid w-full gap-2 text-sm sm:w-48">Monthly limit ({cur})<Input name="limit" type="number" min="1" step="1" required placeholder="0" /></label>
+          <label className="grid w-full gap-2 text-sm sm:w-48">Monthly limit ({cur})<Input name="limit" type="number" min="1" step="1" required placeholder="0" defaultValue={draft?.target === "budgets" ? draft.draft.amount : undefined} /></label>
           <Button disabled={!online || busy}>{busy ? "Saving…" : "Set budget"}</Button>
         </form>
       </Panel>

@@ -27,9 +27,11 @@ export const listTransactions = createServerFn({ method: "GET" })
     return rows.map((r) => ({
       id: r.id, kind: r.kind, amountMinor: r.amountMinor, currency: r.currency,
       category: r.category, note: r.note, occurredOn: String(r.occurredOn),
-      accountName: names.get(r.accountId) ?? "",
+      accountName: names.get(r.accountId) ?? "", accountId: r.accountId,
     }));
   });
+
+export const importExistingTransactions = createServerFn({ method: "GET" }).middleware([requireUser]).handler(async ({ context }) => { const { getDb } = await import("@/core/db/client"), { transactionsRepo } = await import("./repository"); const rows = await transactionsRepo.list(await getDb(), context.userId, {}, 100001); if (rows.length > 100000) throw new Error("Duplicate review exceeds its safe entry limit. No incomplete duplicate check is claimed."); return rows.map(r => ({ accountId: r.accountId, kind: r.kind, amountMinor: r.amountMinor, currency: r.currency, note: r.note, occurredOn: r.occurredOn })); });
 
 export const createTransaction = createServerFn({ method: "POST" })
   .middleware([requireUser])

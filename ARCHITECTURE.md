@@ -37,11 +37,40 @@ drizzle/                   Generated SQL migrations
 ## Patterns used
 - Repository (data access), Service layer (pure rules), Adapter (external APIs behind interfaces, e.g. `RatesProvider`), Validation at the boundary (zod), Central query keys (`shared/queries.ts`) so one `invalidateMoney()` refreshes all money views.
 
-## How to add a feature (example: "Goals")
-1. Add a `goal` table in `core/db/schema.ts`, run `bun run db:generate`.
-2. Create `features/goals/{repository,service,functions}.ts` following `features/budgets`.
-3. Add tests for `service.ts` in `src/test/`.
-4. Create `src/routes/_authenticated/goals.tsx` and add one entry to `NAV` in `shared/components/AppShell.tsx`.
+## System and data flow
+```text
+TanStack page -> vault gate -> TanStack Query -> authenticated server function
+                                  |                       |
+                         encrypted device snapshot    user-scoped repository -> Neon
+Expense confirmation -> encrypted sync journal -> acknowledged transaction -> refreshed report
+Local PDF/CSV/XLSX/OCR -> reviewed rows -> same encrypted expense journal
+Consented chat -> OpenRouter -> validated proposal -> explicit confirmation -> same journal
+Owner-approved membership -> shared ledger (never personal account ledgers)
+Netlify scheduled job -> secret-checked endpoint -> FX snapshots / generic Web Push
+```
+
+## How to add a feature
+1. Define its money/ownership contract first. Use versioned `finance_record` payloads for planning entities; use separate relational tables where membership or ledger relationships need constraints. Add schema to `core/db/schema.ts`, generate and review a migration, and test upgrading an existing database.
+2. Create a browser-safe Zod contract in `features/<name>/schema.ts` or `service.ts`. Keep amounts as integer minor units and dates validated. Never trust IDs, currencies, or AI suggestions without validation.
+3. Implement `repository.ts` with `userId` on every personal read/write and explicit linked ownership. Shared groups additionally check approved membership; only their owner can approve access.
+4. Implement pure `service.ts` calculations and concrete business-rule tests beside `src/test/`. Add a PGlite integration test for ownership and write replay. Use `core/db/atomic.server.ts` for multi-record mutations: Neon HTTP requires transactional batches, not interactive transactions.
+5. Add a validated `requireUser` server function, dynamically importing server dependencies within its handler. Return plain data; preserve no-store headers. Provider credentials belong only in the handler.
+6. Add a unique leaf head and vault-gated route loader with `ensureQueryData`; use `useSuspenseQuery`, semantic tokens and accessible exact-value alternatives. Add the navigation entry only after the page exists.
+7. Existing expense writes use encrypted journal UUIDs. Other offline mutations must remain disabled until their operation-specific replay/conflict behavior is tested. Verify saved readback, network failure, mobile and locking before documenting completion.
+
+## Expanded finance modules
+- `insights`: equal-length comparisons, custom/month pairs, independent budget pace, full daily grid, category and cumulative tables, saved comparisons.
+- `imports`: PapaParse, read-excel-file, PDF.js and Tesseract execute on-device. Local OCR engine/language assets are served/pre-cached by Artha. Files stay transient; saved review fields are encrypted. Format mapping is user-reviewed, not a promise of universal bank extraction.
+- `planning`: versioned assets/liabilities, manual holdings/flows and XIRR, goals/contributions, income sources, splits, bills/finite EMI schedules and saved forecasts. Ledgers are separate: planning records never silently update account balances.
+- `groups`: private shared ledgers with SHA-256-hashed 7-day invite codes, pending membership requests and owner approval. Shared records only include group entries; no personal transactions are exposed. Removed members lose server access, but information previously viewed cannot be remotely erased.
+- `tax`: historical FY2025–26 resident-under-60 estimates, listed-equity cases, ordinary-income surcharge/marginal relief and sourced legal context. Unverified years and mixed capital-gains surcharge above ₹50 lakh remain explicitly unsupported. Advance-tax targets subtract user-entered expected TDS/TCS and use the general ₹10,000 threshold.
+- `planning/wealth-service`: dated account-inclusive net worth and received income categories with range/custom-date reports; manual valuations carry forward and linked duplicate assets are excluded. Opening balances begin at account creation, not an invented historical date. Safe read limits fail visibly rather than returning partial totals.
+- `assistant`: bounded, consented OpenRouter context; validated internal destinations, selected-period report access, expense proposals and user-supplied form assumptions. Provider output cannot authorize writes.
+- `backup`: separate passphrase encryption, strict validated preview, append-only atomic restore and backup/user-scoped deterministic IDs. Missing budgets are restored, existing category limits/preferences are retained. Currency conversion must be available before any restore write. Shared ledgers and encrypted pending journals are not included in the financial export.
+- `reminders`: opt-in generic Web Push at 8 PM India time plus daily timestamped FX refresh. Deployment keys/permission and the hosting schedule must all exist. This is not expense background sync.
+
+## Verification scope
+Signed-in browser checks cover CSV/XLSX parsing, receipt photo OCR, scanned/text PDFs, confirmed expense sync/readback, dated net worth, holdings/valuation/XIRR, goals, splits, saved comparisons/forecasts/tax scenarios, encrypted export/restore and owner-approved shared entries read by a second account. Device-lock checks reject a wrong PIN and unlock only with passphrase plus correct PIN. Automated WCAG A/AA-tagged axe checks found no violations on twelve new pages in both themes; this is not certification or a substitute for manual screen-reader testing. Tests cover vault/PIN failure-closed behavior, atomic restores, account ownership, tax boundaries, reminder scheduling and FX snapshot failover. Live OpenRouter currently returns 401; notification/email delivery and the latest deployed authenticated offline restart need the external setup listed in DEPLOYMENT.md.
 
 ## How to add an external integration (AI, your investment API)
 Create `core/integrations/<name>.ts` exporting an interface + one implementation that reads its key from `process.env` inside the function. Call it only from server functions.

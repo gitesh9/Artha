@@ -1,4 +1,13 @@
 # Roadmap
+- [ ] Complete all live-service/deployed checks in the approved plan (blocked by the external setup listed below)
+- [x] Finish dated account-inclusive net worth and income-source reports, shared refresh, OCR/PDF/XLSX flows, PIN rules and automated accessibility verification
+- [x] Check https://artha98.netlify.app/ exact CSS/JS, manifest, icons, worker and offline shell: all returned 200 with correct content types
+- [x] Verify Insights, CSV import/sync/readback, holdings/valuation/XIRR, goals, splits, assets, encrypted restore and saved forecasts/comparisons with real records
+- [x] Verify receipt/scanned/text PDF and XLSX extraction, confirmed receipt sync/readback, net-worth amounts, ordinary tax surcharge/marginal relief and saved scenarios
+- [x] Verify assistant proposal/consent safety with a simulated provider, encrypted export/restore, PIN failure-closed rules, secret-checked notification jobs and durable FX failover
+- [x] Automated WCAG A/AA-tagged checks on twelve new pages in both themes, plus phone-width checks (not WCAG certification)
+- [ ] Manual assistive-technology review (requires a screen-reader user/environment; automated checks are not certification)
+- [ ] Connect investment suggestions (blocked: supplied abc.com/get/suggestion returns ABC Entertainment's 404 page; working endpoint and request/response documentation needed)
 - [x] Prepare Netlify deployment and local asset serving, graceful public startup, and deployment instructions
 - [x] Add browser installation flow and validate install controls, generated cache privacy, and preview guards
 - [x] Encrypt financial snapshots and sync journal; migrate existing plaintext safely
@@ -13,11 +22,14 @@
 - [x] Explore visual expense insights and period comparisons (discussion only); use both budget and historical baselines
 - [x] Phase 1 core: login, accounts, transactions, overview, calendar, budgets, currencies
 - [x] Rename app to Artha
-- [ ] Evening reminder push notifications (needs VAPID keys + scheduled job on hosting)
+- [ ] Live evening reminder delivery (blocked: missing VAPID keys/contact subject, JOB_SECRET, hosted scheduler activation and browser notification consent)
 - [ ] Password-reset email delivery (blocked: verified Resend sender not yet created)
 - [x] Secure password recovery forms and authenticated password changes
 - [x] Navigation loading states and graceful failure handling
 - [x] Offline snapshots, expense logging, and reconnect sync (signed-in reconnect flow verified)
-- [ ] Published Netlify deployment and native install/offline cold-start check (blocked: owner must deploy with Neon credentials and migrated tables)
-- [ ] Phase 2: assets/liabilities, portfolio, AI chat (OpenRouter key), tax estimator, investment API (your API URL/key)
-- [ ] Phase 3 ideas: see .lovable/plan/
+- [ ] Latest published Netlify finance/install/offline cold-start check (blocked: owner must redeploy latest code/apply migrations; no authenticated deployed session is available)
+- [x] Implement manual wealth/portfolio, goals, bills/finite EMI scheduling, splits, private owner-approved shared groups, planning calculators, saved forecasts/comparisons and encrypted backups
+- [x] Complete independent Phase 2/3 tools including recurring-pattern acceptance, actual bill payment dates, account-inclusive wealth, forecasts, receipt camera/review and offline document asset coverage
+- [ ] Optional Account Aggregator connection (blocked: provider onboarding, API contract and lawful consent flow)
+- [ ] Optional signed Android SMS wrapper (blocked: signing/platform permissions and privacy/store review; PWA camera/pasted SMS work independently)
+- [ ] Wider tax-year/special-case coverage (blocked: statutory verification/professional review; verified FY2025–26 supported cases remain available)

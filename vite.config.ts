@@ -17,10 +17,12 @@ export const offlineBuildOptions = {
     devOptions: { enabled: false },
     workbox: {
       cacheId: "artha",
-      globPatterns: ["**/*.{js,css,svg,png,woff2,webmanifest}", "offline.html"],
+      globPatterns: ["**/*.{js,mjs,wasm,css,svg,png,woff2,webmanifest,gz}", "offline.html"],
       globIgnores: ["**/server/**"],
       navigateFallback: null,
       cleanupOutdatedCaches: true,
+      importScripts: ["/push-events.js"],
+      maximumFileSizeToCacheInBytes: 8000000,
       runtimeCaching: [{
         urlPattern: ({ request, url }) => request.mode === "navigate" &&
           !/^\/(?:api|_serverFn|reset-password|~oauth|auth)(?:\/|$)/.test(url.pathname),

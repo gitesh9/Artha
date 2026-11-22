@@ -1,0 +1,13 @@
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { requireUser } from "@/core/auth/middleware";
+import { createGroupInput, entryInput, groupIdInput, inviteInput, memberInput } from "./service";
+async function dependencies() { const { getDb } = await import("@/core/db/client"), { groupsRepo } = await import("./repository"); return { db: await getDb(), repo: groupsRepo }; }
+export const listGroups = createServerFn({ method: "GET" }).middleware([requireUser]).handler(async ({ context }) => { const { db, repo } = await dependencies(); return repo.list(db, context.userId); });
+export const getGroup = createServerFn({ method: "GET" }).middleware([requireUser]).inputValidator(groupIdInput).handler(async ({ context, data }) => { const { db, repo } = await dependencies(); return repo.detail(db, context.userId, data.groupId); });
+export const createGroup = createServerFn({ method: "POST" }).middleware([requireUser]).inputValidator(createGroupInput).handler(async ({ context, data }) => { const { db, repo } = await dependencies(); return repo.create(db, context.userId, data.name, data.currency); });
+export const inviteGroup = createServerFn({ method: "POST" }).middleware([requireUser]).inputValidator(groupIdInput).handler(async ({ context, data }) => { const { db, repo } = await dependencies(); return repo.invite(db, context.userId, data.groupId); });
+export const requestGroup = createServerFn({ method: "POST" }).middleware([requireUser]).inputValidator(inviteInput).handler(async ({ context, data }) => { const { db, repo } = await dependencies(); await repo.request(db, context.userId, data.token); });
+export const approveGroup = createServerFn({ method: "POST" }).middleware([requireUser]).inputValidator(memberInput).handler(async ({ context, data }) => { const { db, repo } = await dependencies(); await repo.approve(db, context.userId, data.groupId, data.userId, data.approve); });
+export const saveGroupEntry = createServerFn({ method: "POST" }).middleware([requireUser]).inputValidator(entryInput).handler(async ({ context, data }) => { const { db, repo } = await dependencies(); await repo.save(db, context.userId, data); });
+export const removeGroupEntry = createServerFn({ method: "POST" }).middleware([requireUser]).inputValidator(groupIdInput.extend({ id: z.string().uuid() })).handler(async ({ context, data }) => { const { db, repo } = await dependencies(); await repo.remove(db, context.userId, data.groupId, data.id); });

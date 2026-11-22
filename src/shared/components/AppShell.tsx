@@ -1,7 +1,7 @@
 import { Link, useNavigate, useRouteContext, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState, type ReactNode } from "react";
-import { ArrowUpRight, CalendarDays, LayoutDashboard, ListOrdered, LogOut, Menu, PiggyBank, Settings, Wallet, History, LockKeyhole } from "lucide-react";
+import { ArrowUpRight, CalendarDays, LayoutDashboard, ListOrdered, LogOut, Menu, PiggyBank, Settings, Wallet, History, LockKeyhole, ChartNoAxesCombined, FileUp, Landmark, TrendingUp, Target, Calculator, Receipt, Users, MessageCircle, FileLock, Eye, EyeOff } from "lucide-react";
 import { authClient } from "@/core/auth/client";
 import { QuickAddDialog } from "@/features/transactions/components/QuickAddDialog";
 import { Button } from "@/components/ui/button";
@@ -13,14 +13,27 @@ import { broadcastVaultLock, listenForVaultLock, vaultIsUnlocked } from "@/core/
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { SyncBanner } from "@/core/offline/SyncBanner";
+import { DraftProvider } from "./DraftProvider";
 
 /** Navigation lives here. Add a page: create the route file, then add one entry below. */
 const NAV = [
   { to: "/dashboard", label: "Overview", icon: LayoutDashboard },
+  { to: "/insights", label: "Insights", icon: ChartNoAxesCombined },
+  { to: "/import", label: "Import", icon: FileUp },
   { to: "/transactions", label: "Transactions", icon: ListOrdered },
   { to: "/calendar", label: "Calendar", icon: CalendarDays },
   { to: "/budgets", label: "Budgets", icon: PiggyBank },
   { to: "/accounts", label: "Accounts", icon: Wallet },
+  { to: "/wealth", label: "Wealth", icon: Landmark },
+  { to: "/portfolio", label: "Portfolio", icon: TrendingUp },
+  { to: "/goals", label: "Goals", icon: Target },
+  { to: "/bills", label: "Bills & EMIs", icon: Receipt },
+  { to: "/splits", label: "Split expenses", icon: Users },
+  { to: "/groups", label: "Shared expenses", icon: Users },
+  { to: "/planner", label: "Planning lab", icon: Calculator },
+  { to: "/tax", label: "Tax scenarios", icon: Calculator },
+  { to: "/assistant", label: "Assistant", icon: MessageCircle },
+  { to: "/backup", label: "Encrypted backup", icon: FileLock },
   { to: "/sync-history", label: "Sync history", icon: History },
   { to: "/settings", label: "Settings", icon: Settings },
 ] as const;
@@ -30,6 +43,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [amountsHidden, setAmountsHidden] = useState(false);
   const [locked, setLocked] = useState(!vaultIsUnlocked(user.id));
   const [confirmSignOut, setConfirmSignOut] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
@@ -79,7 +93,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     <Button variant="ghost" onClick={lockLocally} className="mt-3 justify-start text-muted-foreground"><LockKeyhole aria-hidden="true" />Lock local data</Button>
     <Button variant="ghost" onClick={() => setConfirmSignOut(true)} className="justify-start text-muted-foreground"><LogOut aria-hidden="true" />Sign out</Button>
   </div>;
-  return <OfflineProvider user={user}><AlertDialog open={confirmSignOut} onOpenChange={setConfirmSignOut}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Sign out and protect this device?</AlertDialogTitle><AlertDialogDescription>Financial snapshots are cleared. Saved entries and sync history stay encrypted, including unsynced expenses; they are not discarded. Keys are removed from all open Artha tabs. To sync later, sign in to the same account and unlock with this device’s passphrase. Signing out needs internet to revoke your online session.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => void signOut()}>Sign out securely</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog><div className="min-h-dvh lg:grid lg:grid-cols-[230px_minmax(0,1fr)]">
+  return <OfflineProvider user={user}><DraftProvider><AlertDialog open={confirmSignOut} onOpenChange={setConfirmSignOut}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Sign out and protect this device?</AlertDialogTitle><AlertDialogDescription>Financial snapshots are cleared. Saved entries and sync history stay encrypted, including unsynced expenses; they are not discarded. Keys are removed from all open Artha tabs. To sync later, sign in to the same account and unlock with this device’s passphrase. Signing out needs internet to revoke your online session.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => void signOut()}>Sign out securely</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog><div className={`min-h-dvh lg:grid lg:grid-cols-[230px_minmax(0,1fr)] ${amountsHidden ? "[&_.num]:invisible" : ""}`}>
     <a href="#main-content" className="sr-only z-50 rounded-md bg-primary p-4 text-primary-foreground focus:not-sr-only focus:fixed focus:left-4 focus:top-4">Skip to content</a>
     <aside className="sticky top-0 hidden h-dvh flex-col overflow-y-auto border-r bg-sidebar p-5 lg:flex">
       <Link to="/dashboard" className="flex min-h-11 items-center gap-3 px-3 text-2xl font-bold"><span className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-primary-foreground"><ArrowUpRight aria-hidden="true" /></span>Artha<span className="text-primary">.</span></Link>
@@ -95,10 +109,10 @@ export function AppShell({ children }: { children: ReactNode }) {
           </SheetContent>
         </Sheet>
         <p className="hidden text-sm text-muted-foreground sm:block">Artha <span className="mx-3 text-border">/</span><span className="text-foreground">{current}</span></p>
-        <div className="ml-auto flex items-center gap-3"><ThemeToggle /><QuickAddDialog /></div>
+        <div className="ml-auto flex items-center gap-3"><Button variant="ghost" size="icon" aria-label={amountsHidden ? "Show amounts" : "Hide amounts"} title={amountsHidden ? "Show amounts" : "Hide amounts (screen masking only)"} onClick={() => setAmountsHidden(v => !v)}>{amountsHidden ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}</Button><ThemeToggle /><QuickAddDialog /></div>
         </div><SyncBanner />
       </header>
       <main id="main-content" tabIndex={-1} className="mx-auto max-w-7xl px-4 py-8 pb-24 outline-none md:px-8 md:py-10 md:pb-24">{children}</main>
     </div>
-  </div></OfflineProvider>;
+  </div></DraftProvider></OfflineProvider>;
 }

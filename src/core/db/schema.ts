@@ -3,7 +3,7 @@
  * Auth tables follow Better Auth's expected shape; app tables are below.
  * After editing: `bun run db:generate` then `bun run db:migrate` (see ARCHITECTURE.md).
  */
-import { pgTable, text, timestamp, boolean, bigint, date, index, uniqueIndex } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, boolean, bigint, date, index, uniqueIndex, jsonb } from "drizzle-orm/pg-core";
 
 // ---------- Auth (Better Auth) ----------
 export const user = pgTable("user", {
@@ -103,3 +103,32 @@ export const budget = pgTable(
   },
   (t) => [uniqueIndex("budget_user_category_uq").on(t.userId, t.category)],
 );
+
+/** Versioned, validated planning records. Payload contracts live in features/planning/schema.ts. */
+export const financeRecord = pgTable("finance_record", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+  kind: text("kind").notNull(),
+  payload: jsonb("payload").notNull(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (t) => [index("finance_record_user_kind_idx").on(t.userId, t.kind)]);
+
+export const fxSnapshot = pgTable("fx_snapshot", {
+  base: text("base").primaryKey(),
+  rateDate: date("rate_date").notNull(),
+  rates: jsonb("rates").$type<Record<string, number>>().notNull(),
+  refreshedAt: timestamp("refreshed_at").notNull().defaultNow(),
+});
+
+export const pushSubscription = pgTable("push_subscription", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+  endpoint: text("endpoint").notNull().unique(),
+  subscription: jsonb("subscription").notNull(),
+  lastSentOn: date("last_sent_on"),
+});
+
+export const sharedGroup = pgTable("shared_group", { id: text("id").primaryKey(), ownerId: text("owner_id").notNull().references(() => user.id, { onDelete: "cascade" }), name: text("name").notNull(), currency: text("currency").notNull() });
+export const groupMember = pgTable("group_member", { id: text("id").primaryKey(), groupId: text("group_id").notNull().references(() => sharedGroup.id, { onDelete: "cascade" }), userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }), approved: boolean("approved").notNull().default(false) }, t => [uniqueIndex("group_member_group_user_uq").on(t.groupId, t.userId)]);
+export const groupInvite = pgTable("group_invite", { tokenHash: text("token_hash").primaryKey(), groupId: text("group_id").notNull().references(() => sharedGroup.id, { onDelete: "cascade" }), expiresAt: timestamp("expires_at").notNull() });
+export const groupEntry = pgTable("group_entry", { id: text("id").primaryKey(), groupId: text("group_id").notNull().references(() => sharedGroup.id, { onDelete: "cascade" }), createdBy: text("created_by").notNull().references(() => user.id), kind: text("kind").notNull(), payload: jsonb("payload").notNull(), createdAt: timestamp("created_at").notNull().defaultNow() });

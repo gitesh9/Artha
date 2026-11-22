@@ -13,6 +13,10 @@ import { Moon, Sun } from "lucide-react";
 import { useTheme } from "@/shared/components/ThemeProvider";
 import { PageError } from "@/shared/components/NavigationStatus";
 import { requireSavedData } from "@/shared/query-loading";
+import { ReminderSettings } from "@/features/reminders/ReminderSettings";
+import { Input } from "@/components/ui/input";
+import { useState } from "react";
+import { configurePin, disablePin } from "@/core/offline/secondary-pin";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({ meta: [{ title: "Settings — Artha" }, { name: "description", content: "Base currency and exchange rates." }, { property: "og:title", content: "Settings — Artha" }, { property: "og:description", content: "Base currency and exchange rates." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
@@ -23,6 +27,9 @@ export const Route = createFileRoute("/_authenticated/settings")({
 });
 
 function SettingsPage() {
+  const { user } = Route.useRouteContext();
+  const [pin, setPin] = useState("");
+  const [pinBusy, setPinBusy] = useState(false);
   const { theme, setTheme } = useTheme();
   const qc = useQueryClient();
   const { online } = useOffline();
@@ -58,6 +65,8 @@ function SettingsPage() {
         )}
       </Panel>
       <Panel className="max-w-xl"><h2 className="text-lg font-semibold">Security</h2><ChangePasswordForm /></Panel>
+      <Panel className="max-w-xl"><h2 className="text-lg font-semibold">Evening reminders</h2><ReminderSettings /></Panel>
+      <Panel className="max-w-xl"><h2 className="text-lg font-semibold">Secondary device PIN</h2><p className="mt-3 text-sm text-muted-foreground">An optional extra check after your device passphrase. It never replaces that passphrase or unlocks encrypted data on its own. Use Lock local data for a quick lock. The verifier stays encrypted on this device.</p><label className="mt-4 grid gap-2 text-sm">PIN · 6–12 digits<Input type="password" inputMode="numeric" autoComplete="off" pattern="[0-9]{6,12}" value={pin} onChange={e => setPin(e.target.value)} /></label><div className="mt-4 flex flex-wrap gap-3"><Button disabled={pinBusy || !/^\d{6,12}$/.test(pin)} onClick={async () => { setPinBusy(true); try { await configurePin(user.id, pin); setPin(""); toast.success("Secondary PIN enabled; future unlocks need both passphrase and PIN."); } catch { toast.error("PIN was not saved. Retry without closing this page."); } finally { setPinBusy(false); } }}>Enable secondary PIN</Button><Button variant="outline" disabled={pinBusy} onClick={async () => { setPinBusy(true); try { await disablePin(user.id); toast.success("Secondary PIN disabled. Device passphrase protection remains."); } catch { toast.error("Could not change PIN settings."); } finally { setPinBusy(false); } }}>Disable secondary PIN</Button></div></Panel>
       <Panel className="max-w-xl"><h2 className="text-lg font-semibold">Offline data on this device</h2>
         <dl className="mt-4 space-y-4 text-sm">
           <div><dt className="font-medium">Encrypted financial copies</dt><dd className="mt-1 text-muted-foreground">Financial snapshots, saved entries, and sync history are encrypted with AES-256-GCM in this browser, separated by account. Each save uses a fresh random nonce. Other websites cannot read this storage.</dd></div>

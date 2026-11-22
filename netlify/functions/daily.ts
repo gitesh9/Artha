@@ -1,0 +1,3 @@
+/** Netlify Scheduled Function. Secrets stay in hosting; TanStack owns the actual job logic. */
+export default async function daily() { const origin = process.env["BETTER_AUTH_URL"], secret = process.env["JOB_SECRET"]; if (!origin?.startsWith("https://") || !secret) return new Response("Scheduler is not configured", { status: 503 }); return fetch(new URL("/api/public/scheduled", origin), { method: "POST", headers: { Authorization: `Bearer ${secret}` }, redirect: "manual", signal: AbortSignal.timeout(25000) }); }
+export const config = { schedule: "30 14 * * *" };

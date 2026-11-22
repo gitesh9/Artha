@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ThemeToggle } from "@/shared/components/ThemeProvider";
+import { verifySecondaryPin } from "@/core/offline/secondary-pin";
 
 export const Route = createFileRoute("/local-vault")({
   ssr: false,
@@ -37,6 +38,7 @@ function LocalVault() {
     try {
       if (configured) await unlockVault(user.id, passphrase);
       else { await createVault(user.id, passphrase); setConfigured(true); }
+      await verifySecondaryPin(user.id, String(data.get("pin") || ""));
       await migrateFinancialData(user.id);
       if (!offline) await rememberOfflineUser(user);
       form.reset();
@@ -53,6 +55,7 @@ function LocalVault() {
       <form onSubmit={submit} className="space-y-5">
         <div className="space-y-2"><Label htmlFor="device-passphrase">Device passphrase</Label><Input id="device-passphrase" name="passphrase" type="password" required minLength={vaultMinLength} maxLength={256} autoComplete="off" disabled={busy} /></div>
         {!configured && <div className="space-y-2"><Label htmlFor="device-confirmation">Confirm device passphrase</Label><Input id="device-confirmation" name="confirmation" type="password" required minLength={vaultMinLength} maxLength={256} autoComplete="off" disabled={busy} /></div>}
+        {configured && <div className="space-y-2"><Label htmlFor="secondary-pin">Secondary PIN · only if enabled on this device</Label><Input id="secondary-pin" name="pin" type="password" inputMode="numeric" autoComplete="off" maxLength={12} disabled={busy} /></div>}
         {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
         <Button disabled={busy} className="w-full">{busy ? "Opening protected data…" : configured ? "Unlock" : "Encrypt local data"}</Button>
       </form>
