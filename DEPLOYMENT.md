@@ -6,15 +6,7 @@ Use Node **22.12 or newer** (Netlify uses Node 22 from `netlify.toml`). Install 
 
 Configure these variables on Netlify with **Builds and Functions** scope:
 
-| Variable | Required value |
-| --- | --- |
-| `DATABASE_URL` | Neon Postgres connection string with TLS (`sslmode=require`) |
-| `BETTER_AUTH_SECRET` | A random secret of at least 32 characters; keep it stable across redeploys |
-| `BETTER_AUTH_URL` | Your canonical HTTPS origin, e.g. `https://your-site.netlify.app` (no path) |
-
 Generate a secret locally using `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"`. Paste it into the hosting settings, not source code. Rotating it can invalidate existing sessions.
-
-Optional: `RESEND_API_KEY` + `PASSWORD_RESET_FROM` (verified sender) for recovery emails; `OPENROUTER_API_KEY` + `OPENROUTER_MODEL` for consented chat/conflict advice. The rest of the app does not require these providers. A present key is not a successful provider check; the currently checked OpenRouter key returned 401.
 
 Apply the checked-in Drizzle migrations to Neon **before first use**, using `bun run db:migrate` with `DATABASE_URL` in your local environment. This is a database change: review migrations/backups before running against real money data. In-memory preview data is not transferred to Neon.
 Apply all migrations in order, including `0001_safe_molly_hayes.sql` (planning, FX and push) and `0002_medical_sphinx.sql` (shared groups, membership, invitations and entries). Never apply only the initial migration on an expanded installation.

@@ -1,7 +1,6 @@
 # Roadmap
 - [ ] Complete all live-service/deployed checks in the approved plan (blocked by the external setup listed below)
 - [x] Finish dated account-inclusive net worth and income-source reports, shared refresh, OCR/PDF/XLSX flows, PIN rules and automated accessibility verification
-- [x] Check https://artha98.netlify.app/ exact CSS/JS, manifest, icons, worker and offline shell: all returned 200 with correct content types
 - [x] Verify Insights, CSV import/sync/readback, holdings/valuation/XIRR, goals, splits, assets, encrypted restore and saved forecasts/comparisons with real records
 - [x] Verify receipt/scanned/text PDF and XLSX extraction, confirmed receipt sync/readback, net-worth amounts, ordinary tax surcharge/marginal relief and saved scenarios
 - [x] Verify assistant proposal/consent safety with a simulated provider, encrypted export/restore, PIN failure-closed rules, secret-checked notification jobs and durable FX failover
@@ -14,7 +13,8 @@
 - [x] Add device-passphrase unlock and cross-tab locking with secure sign-out
 - [x] Explain key protection and verify encrypted storage, mobile/offline unlock, and sign-out with unsynced work
 - [x] Persistent connection banner and last acknowledged expense-sync time
-- [x] Device sync history with pending/completed/failed entries and targeted retries
+- [x] Device sync history with pendin
+g/completed/failed entries and targeted retries
 - [x] Advice-only conflict comparison via OpenRouter with consent, mobile layout, and safe retries
 - [ ] Live AI recommendation verification (blocked: OpenRouter returns HTTP 401 for the saved key; replacement declined)
 - [x] Mobile verification and local-storage security explanation
