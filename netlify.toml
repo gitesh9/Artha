@@ -11,7 +11,7 @@
 
 [build.environment]
   NODE_VERSION = "22"
-  SECRETS_SCAN_OMIT_PATHS = "src/test/**,ARCHITECTURE.md"
+  SECRETS_SCAN_OMIT_PATHS = "src/test/**,ARCHITECTURE.md,DEPLOYMENT.md,Roadmap.md"
 
 # The adapter emits the SSR function with preferStatic=true. Do not add a
 # catch-all SPA redirect: it would swallow authentication and server functions.
