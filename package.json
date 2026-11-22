@@ -13,7 +13,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
+    "db:migrate": "node --env-file-if-exists=.env scripts/migrate.mjs",
     "prebuild": "node -e \"for (const d of ['dist','.netlify/v1']) require('fs').rmSync(d,{recursive:true,force:true})\""
   },
   "overrides": {

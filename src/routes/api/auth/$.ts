@@ -5,8 +5,8 @@ import { getAuth } from "@/core/auth/auth";
 export const Route = createFileRoute("/api/auth/$")({
   server: {
     handlers: {
-      GET: async ({ request }) => (await getAuth()).handler(request),
-      POST: async ({ request }) => (await getAuth()).handler(request),
+      GET: async ({ request }) => (await getAuth(request)).handler(request),
+      POST: async ({ request }) => (await getAuth(request)).handler(request),
     },
   },
 });

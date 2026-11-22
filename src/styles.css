@@ -166,6 +166,7 @@
   summary { min-height: 44px; }
   .recharts-default-tooltip { background: var(--popover) !important; border-color: var(--border) !important; border-radius: var(--radius); color: var(--foreground); }
   .recharts-tooltip-label { color: var(--foreground); }
+  .recharts-tooltip-cursor { fill: var(--muted); stroke: var(--border); }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
   }
