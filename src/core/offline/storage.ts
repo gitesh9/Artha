@@ -4,7 +4,7 @@ import { completeSync, failSync, type SyncJournal } from "./sync-service";
 import { readEncrypted, writeEncrypted, withVaultLock, vaultIsUnlocked } from "./vault";
 
 export type OfflineUser = { id: string; name: string; email: string };
-export type Entry = { clientId: string; accountId: string; kind: "income" | "expense"; amount: number; category: string; note?: string; occurredOn: string };
+export type Entry = { clientId: string; accountId: string; kind: "income" | "expense" | "transfer"; amount: number; category: string; note?: string; occurredOn: string; destinationId?: string; destinationAmount?: number; sipBillId?: string; units?: number };
 export type PendingEntry = { data: Entry; currency: string; createdAt: number };
 type SavedSession = { user: OfflineUser; expiresAt: number };
 const sessionKey = "artha:offline:session:v1";

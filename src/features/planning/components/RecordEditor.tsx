@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { savePlanning, removePlanning } from "../functions";
 import { payloadSchema, type RecordKind, type FinancialRecord } from "../schema";
 import { planningQuery } from "../queries";
@@ -13,14 +13,18 @@ import { toISODate } from "@/shared/dates";
 import { useOffline } from "@/core/offline/OfflineProvider";
 import { toast } from "sonner";
 import { useDraft } from "@/shared/components/DraftProvider";
+import { listAccounts } from "@/features/accounts/functions";
+import { taggedNote } from "@/features/transactions/tags";
 export function RecordEditor({ kind, title, parentKind, subtypes = ["other"], children }: { kind: RecordKind; title: string; parentKind?: RecordKind; subtypes?: string[]; children?: React.ReactNode }) {
   const { draft, setDraft } = useDraft();
   const suggestion = draft && ((draft.target === "goals" && kind === "goal") || (draft.target === "bills" && kind === "bill") || (draft.target === "portfolio" && kind === "holding") || (draft.target === "wealth" && kind === "asset")) ? draft.draft : null;
   const { data: records } = useSuspenseQuery(planningQuery), { online } = useOffline(); const qc = useQueryClient(); const save = useServerFn(savePlanning), remove = useServerFn(removePlanning);
   const [busy, setBusy] = useState(false), [editing, setEditing] = useState<FinancialRecord | null>(null);
+  const fetchAccounts = useServerFn(listAccounts);
+  const { data: accounts = [] } = useQuery({ queryKey: ["accounts"], queryFn: () => fetchAccounts(), enabled: kind === "bill" || kind === "salary" });
   const items = records.filter(r => r.kind === kind), parents = records.filter(r => r.kind === parentKind);
   async function submit(e: React.FormEvent<HTMLFormElement>) { e.preventDefault(); if (!online || busy) return; const form = e.currentTarget, f = new FormData(form), currency = String(f.get("currency") || "INR"); setBusy(true);
-    try { const payload = payloadSchema.parse({ name: f.get("name"), currency, amountMinor: toMinor(Number(f.get("amount") || 0), currency), date: f.get("date"), note: String(f.get("note") || ""), valueMinor: toMinor(Number(f.get("value") || 0), currency), targetMinor: toMinor(Number(f.get("target") || 0), currency), quantity: Number(f.get("quantity") || 0), subtype: String(f.get("subtype") || "other"), installmentsLeft: Number(f.get("installments") || 1), ...(f.get("linkedId") ? { linkedId: f.get("linkedId") } : {}), participants: String(f.get("participants") || "").split(",").map(s => s.trim()).filter(Boolean), payer: String(f.get("payer") || ""), from: String(f.get("from") || ""), to: String(f.get("to") || ""), ...(editing ? { paid: editing.payload.paid, history: editing.payload.history } : {}) });
+    try { const payload = payloadSchema.parse({ name: f.get("name"), currency, amountMinor: toMinor(Number(f.get("amount") || 0), currency), date: f.get("date"), note: kind === "bill" ? taggedNote(String(f.get("note") || ""), String(f.get("tags") || "")) : String(f.get("note") || ""), valueMinor: toMinor(Number(f.get("value") || 0), currency), targetMinor: toMinor(Number(f.get("target") || 0), currency), quantity: Number(f.get("quantity") || 0), subtype: String(f.get("subtype") || "other"), installmentsLeft: Number(f.get("installments") || 1), ...(f.get("accountId") ? { accountId: f.get("accountId") } : {}), ...(f.get("linkedId") ? { linkedId: f.get("linkedId") } : {}), participants: String(f.get("participants") || "").split(",").map(s => s.trim()).filter(Boolean), payer: String(f.get("payer") || ""), from: String(f.get("from") || ""), to: String(f.get("to") || ""), ...(editing ? { paid: editing.payload.paid, history: editing.payload.history, paymentStatus: editing.payload.paymentStatus, penaltyMinor: editing.payload.penaltyMinor, category: editing.payload.category } : {}) });
       await save({ data: { id: editing?.id ?? crypto.randomUUID(), kind, payload } }); await qc.invalidateQueries({ queryKey: planningQuery.queryKey }); setEditing(null); if (suggestion) setDraft(null); form.reset(); toast.success("Saved online");
     } catch (e) { toast.error(e instanceof Error ? e.message : "Not saved. Your form is retained; retry."); } finally { setBusy(false); }
   }
@@ -32,6 +36,9 @@ export function RecordEditor({ kind, title, parentKind, subtypes = ["other"], ch
     <label className="grid gap-2 text-sm">{kind === "goal" ? "Target date" : kind === "bill" ? "Due date" : "Date"}<Input name="date" type="date" required defaultValue={p?.date ?? toISODate(new Date())} /></label>
     {subtypes.length > 1 && <label className="grid gap-2 text-sm">Type<select name="subtype" className="min-h-11 rounded-md border bg-background px-3" defaultValue={p?.subtype ?? subtypes[0]}>{subtypes.map(t => <option key={t}>{t}</option>)}</select></label>}
     {kind === "bill" && <label className="grid gap-2 text-sm">EMI installments remaining · including this one<Input name="installments" type="number" min="1" max="600" step="1" defaultValue={p?.installmentsLeft ?? 1} /></label>}
+    {(kind === "bill" || kind === "salary") && <label className="grid gap-2 text-sm">{kind === "salary" ? "Credit account" : "Linked payment account"}<select name="accountId" required={kind === "salary"} className="min-h-11 rounded-md border bg-background px-3" defaultValue={p?.accountId ?? ""}><option value="">Choose account</option>{accounts.map(a => <option key={a.id} value={a.id}>{a.name} · {a.currency}</option>)}</select></label>}
+    {kind === "bill" && <label className="grid gap-2 text-sm">Tags<Input name="tags" placeholder="hospital, petrol, car-maintenance" /></label>}
+    {kind === "bill" && <label className="grid gap-2 text-sm">SIP holding · required for SIP type<select name="linkedId" className="min-h-11 rounded-md border bg-background px-3" defaultValue={p?.linkedId ?? ""}><option value="">Not an SIP</option>{records.filter(r => r.kind === "holding").map(r => <option key={r.id} value={r.id}>{r.payload.name} · {r.payload.currency}</option>)}</select></label>}
     {(["asset", "liability", "holding"] as string[]).includes(kind) && <label className="grid gap-2 text-sm">Current value · manual estimate<Input name="value" type="number" min="0" step="0.01" required defaultValue={p ? fromMinor(p.valueMinor, p.currency) : 0} /></label>}
     {kind === "goal" && <label className="grid gap-2 text-sm">Target amount<Input name="target" type="number" min="0.01" step="0.01" required defaultValue={p ? fromMinor(p.targetMinor, p.currency) : suggestion?.amount} /></label>}
     {(kind === "holding" || kind === "flow") && <label className="grid gap-2 text-sm">Units (0 for cash-only holdings)<Input name="quantity" type="number" min="0" step="any" defaultValue={p?.quantity ?? 0} /></label>}

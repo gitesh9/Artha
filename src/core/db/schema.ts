@@ -80,7 +80,8 @@ export const transaction = pgTable(
     id: text("id").primaryKey(),
     userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
     accountId: text("account_id").notNull().references(() => moneyAccount.id, { onDelete: "cascade" }),
-    kind: text("kind").notNull(), // "income" | "expense"
+    kind: text("kind").notNull(), // income, expense, transfer_in, transfer_out
+    transferId: text("transfer_id"), // paired internal movements; never report as earnings/spending
     amountMinor: bigint("amount_minor", { mode: "number" }).notNull(),
     currency: text("currency").notNull(),
     category: text("category").notNull(),

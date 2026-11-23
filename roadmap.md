@@ -1,4 +1,12 @@
 # Roadmap
+- [x] Add tags and individual spending totals, preserving encrypted import/sync and backups
+- [x] Add neutral internal transfers and confirm-only salary schedules
+- [x] Add linked bill accounts, unpaid-default shortfall resolution and alternate payment
+- [x] Add transparent all-account cash-reserve and savings-transfer guidance
+- [x] Add linked SIP confirmation and optional Google sign-in configuration
+- [x] Verify tagged expense readback, transfers, top-up then EMI payment, salary scheduling and linked SIP writes; 113 tests pass
+- [ ] Live Google sign-in (blocked: Google Web OAuth credentials, registered redirect origin and consent setup required)
+- [ ] Finish settled-screen mobile navigation and live deployment checks (desktop flows and phone overflow checked; final rerun interrupted when temporary browser files disappeared)
 - [x] Fix preview session cookies; verify embedded and standalone HTTPS sign-in through a local preview proxy
 - [x] Apply pending finance/shared-group migrations without deleting entries; verify all reported pages, saved-goal readback and mobile navigation
 - [x] Replace the overview chart's white hover with theme tokens; verify with a synced expense in dark and light themes

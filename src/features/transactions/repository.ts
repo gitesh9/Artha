@@ -27,7 +27,7 @@ export const transactionsRepo = {
     const rows = await db
       .select({
         accountId: transaction.accountId,
-        net: sql<string>`sum(case when ${transaction.kind} = 'income' then ${transaction.amountMinor} else -${transaction.amountMinor} end)`,
+        net: sql<string>`sum(case when ${transaction.kind} in ('income', 'transfer_in') then ${transaction.amountMinor} else -${transaction.amountMinor} end)`,
       })
       .from(transaction).where(eq(transaction.userId, userId)).groupBy(transaction.accountId);
     return new Map(rows.map((r) => [r.accountId, Number(r.net)]));

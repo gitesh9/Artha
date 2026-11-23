@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ThemeToggle } from "@/shared/components/ThemeProvider";
 import { broadcastVaultLock } from "@/core/offline/vault";
+import { getSignInOptions } from "@/core/auth/session.functions";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -17,9 +18,11 @@ export const Route = createFileRoute("/auth")({
     ],
   }),
   component: AuthPage,
+  loader: () => getSignInOptions().catch(() => ({ google: false })),
 });
 
 function AuthPage() {
+  const options = Route.useLoaderData();
   const [mode, setMode] = useState<"signin" | "signup" | "forgot">("signin");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -69,6 +72,7 @@ function AuthPage() {
         {sent && <p role="status" className="text-sm">If an account matches that email, a reset link will arrive shortly. Check your spam folder too.</p>}
         {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
         <Button className="w-full" disabled={busy || (mode === "forgot" && sent)}>{busy ? "Please wait…" : mode === "signin" ? "Sign in" : mode === "forgot" ? "Send reset link" : "Create account"}</Button>
+        {mode !== "forgot" && <Button variant="outline" type="button" className="w-full" disabled={busy || !options.google} onClick={async () => { setBusy(true); setError(""); try { broadcastVaultLock(); const result = await authClient.signIn.social({ provider: "google", callbackURL: `${window.location.origin}/dashboard`, errorCallbackURL: `${window.location.origin}/auth` }); if (result.error) setError("Google sign-in could not start. Your email sign-in remains available."); } catch { setError("Could not connect to Google. Try again or use email."); } finally { setBusy(false); } }}>Continue with Google{!options.google ? " · not configured" : ""}</Button>}
         {mode === "signin" && <Button variant="link" type="button" className="w-full" disabled={busy} onClick={() => { setMode("forgot"); setError(""); setSent(false); }}>Forgot password?</Button>}
         <Button variant="link" type="button" className="w-full whitespace-normal text-sm"
           disabled={busy} onClick={() => { setMode(mode === "signin" ? "signup" : "signin"); setError(""); setSent(false); }}>

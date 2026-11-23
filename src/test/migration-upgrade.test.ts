@@ -15,7 +15,8 @@ it("upgrades the original database without losing saved entries and creates tabl
     await pg.exec(await readFile("drizzle/0000_fast_famine.sql", "utf8"));
     await pg.query('insert into "user" (id,name,email) values ($1,$2,$3)', ["upgrade-owner", "Owner", "upgrade@example.com"]);
     await pg.query('insert into money_account (id,user_id,name,type,currency,opening_balance_minor) values ($1,$2,$3,$4,$5,$6)', ["saved-account", "upgrade-owner", "Cash", "cash", "INR", 12345]);
-    expect(await migrateDatabase(...adapters(pg))).toEqual(["0000_fast_famine", "0001_safe_molly_hayes", "0002_medical_sphinx"]);
+    expect(await migrateDatabase(...adapters(pg))).toEqual(["0000_fast_famine", "0001_safe_molly_hayes", "0002_medical_sphinx", "0003_illegal_kree"]);
+    expect((await pg.query<{ column_name: string }>("select column_name from information_schema.columns where table_name='transaction' and column_name='transfer_id'")).rows[0]?.column_name).toBe("transfer_id");
     const result = await pg.query<{ table_name: string }>("select table_name from information_schema.tables where table_schema = 'public'");
     expect(result.rows.map(r => r.table_name)).toEqual(expect.arrayContaining(["finance_record", "fx_snapshot", "push_subscription", "shared_group", "group_member", "group_invite", "group_entry"]));
     expect((await pg.query<{ balance: number }>("select opening_balance_minor::integer as balance from money_account where id='saved-account'")).rows[0]?.balance).toBe(12345);

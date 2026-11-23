@@ -10,3 +10,7 @@ export const getCurrentUser = createServerFn({ method: "GET" }).handler(async ()
   const session = await auth.api.getSession({ headers: request.headers });
   return session ? { id: session.user.id, name: session.user.name, email: session.user.email } : null;
 });
+export const getSignInOptions = createServerFn({ method: "GET" }).handler(async () => {
+  const { googleConfigured } = await import("./google-policy");
+  return { google: googleConfigured(process.env["GOOGLE_CLIENT_ID"], process.env["GOOGLE_CLIENT_SECRET"]) };
+});

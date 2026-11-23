@@ -6,12 +6,15 @@ import * as schema from "@/core/db/schema";
 import { passwordPolicy } from "./password-policy";
 import { sendRecoveryEmail } from "@/core/integrations/recovery-email";
 import { authRequestPolicy } from "./request-policy";
+import { googleConfigured } from "./google-policy";
 
 function createAuth(db: Db, secret: string, policy: ReturnType<typeof authRequestPolicy>) {
+  const clientId = process.env["GOOGLE_CLIENT_ID"], clientSecret = process.env["GOOGLE_CLIENT_SECRET"];
   return betterAuth({
     secret,
     ...policy,
     database: drizzleAdapter(db, { provider: "pg", schema }),
+    ...(googleConfigured(clientId, clientSecret) && clientId && clientSecret ? { socialProviders: { google: { clientId, clientSecret } } } : {}),
     emailAndPassword: {
       enabled: true, autoSignIn: true,
       minPasswordLength: passwordPolicy.minLength,

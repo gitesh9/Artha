@@ -9,6 +9,10 @@ export const planningRepo = {
     if (existing && existing.userId !== userId) throw new Error("Record unavailable");
     if (existing && existing.kind !== item.kind) throw new Error("Record type cannot change");
     const rows = await planningRepo.list(db, userId);
+    if (item.kind === "bill" && item.payload.subtype === "sip") {
+      const parent = rows.find(r => r.kind === "holding" && r.id === item.payload.linkedId);
+      if (!parent || parent.payload.currency !== item.payload.currency || !item.payload.accountId) throw new Error("SIP needs an owned holding and payment account in the same currency.");
+    }
     if (item.kind === "flow" || item.kind === "contribution") {
       const expected = item.kind === "flow" ? "holding" : "goal";
       const parent = rows.find(r => r.id === item.payload.linkedId && r.kind === expected);

@@ -13,13 +13,15 @@ import { PageError } from "@/shared/components/NavigationStatus";
 import { requireSavedData } from "@/shared/query-loading";
 import { useOffline } from "@/core/offline/OfflineProvider";
 import { Input } from "@/components/ui/input";
+import { cashflowQuery } from "@/features/planning/queries";
+import { CashflowAdvice } from "@/features/planning/components/CashflowAdvice";
 
 const dashQuery = (range: RangeKey, custom: { from: string; to: string } | null = null) =>
   queryOptions({ queryKey: custom ? ["money", "dashboard", range, custom] : qk.dashboard(range), queryFn: () => getDashboard({ data: { range, ...(custom ?? {}) } }) });
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Overview — Artha" }, { name: "description", content: "Your money flow at a glance." }, { property: "og:title", content: "Overview — Artha" }, { property: "og:description", content: "Your money flow at a glance." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
-  loader: ({ context }) => { requireSavedData(context.queryClient, qk.dashboard("1M")); return context.queryClient.ensureQueryData(dashQuery("1M")); },
+  loader: ({ context }) => { requireSavedData(context.queryClient, qk.dashboard("1M")); requireSavedData(context.queryClient, cashflowQuery.queryKey); return Promise.all([context.queryClient.ensureQueryData(dashQuery("1M")),context.queryClient.ensureQueryData(cashflowQuery)]); },
   errorComponent: PageError,
   notFoundComponent: PageError,
   component: Dashboard,
@@ -63,6 +65,7 @@ function Dashboard() {
         <Stat icon={Wallet} label="Net saved" value={fmt(data.net)} tone={data.net >= 0 ? "text-income" : "text-expense"} />
         <Stat icon={Percent} label="Savings rate" value={`${(data.savingsRate * 100).toFixed(1)}%`} tone="text-foreground" />
       </div>
+      <CashflowAdvice />
       <div className="mt-4 grid gap-4 lg:grid-cols-3">
         <Panel className="lg:col-span-2">
           <h2 className="text-lg font-semibold">Money flow by {data.trendUnit}</h2>

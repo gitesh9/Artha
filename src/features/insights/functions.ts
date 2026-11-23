@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireUser } from "@/core/auth/middleware";
 import { budgetAllowance, compareExpenses, dayCount, validDate } from "./service";
+import { transactionTags } from "../transactions/tags";
 
 const date = z.string().refine(validDate, "Invalid date");
 export const insightsInput = z.object({ from: date, to: date, compareFrom: date, compareTo: date, category: z.string().default(""), accountId: z.string().default("") }).superRefine((v, c) => {
@@ -20,7 +21,10 @@ export const getInsights = createServerFn({ method: "GET" }).middleware([require
     loadBaseTransactions(db, context.userId, { ...filters, from: data.compareFrom, to: data.compareTo }), budgetsRepo.list(db, context.userId),
   ]);
   const comparison = compareExpenses(a.txs, b.txs, data.from, data.to, data.compareFrom, data.compareTo);
+  const tags = new Map<string, { amountMinor: number; count: number }>();
+  for (const row of a.txs) for (const tag of transactionTags(row.note)) { const value = tags.get(tag) ?? { amountMinor: 0, count: 0 }; tags.set(tag, { amountMinor: value.amountMinor + row.amountMinor, count: value.count + 1 }); }
   return { ...comparison, baseCurrency: a.baseCurrency, rates: a.rateInfo,
+    tags: [...tags].map(([tag, value]) => ({ tag, ...value })).sort((a, b) => b.amountMinor - a.amountMinor),
     budgets: budgets.filter(b => !data.category || data.category === b.category).map(b => ({ category: b.category, allowance: budgetAllowance(b.monthlyLimitMinor, data.from, data.to), spent: comparison.current.byCategory.find(c => c.category === b.category)?.amount ?? 0 })),
     largest: a.txs.slice().sort((a, b) => b.amountMinor - a.amountMinor).slice(0, 5),
   };

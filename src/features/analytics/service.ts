@@ -1,11 +1,12 @@
 /** Pure analytics: no I/O, easy to unit test. Input amounts must already be in the base currency. */
-export type BaseTx = { kind: string; amountMinor: number; category: string; occurredOn: string };
+export type BaseTx = { kind: string; amountMinor: number; category: string; occurredOn: string; note?: string | null };
 
 export function summarize(txs: BaseTx[]) {
   let income = 0, expense = 0;
   const byCategory = new Map<string, number>();
   const byDay = new Map<string, { income: number; expense: number }>();
   for (const t of txs) {
+    if (t.kind !== "income" && t.kind !== "expense") continue;
     const day = byDay.get(t.occurredOn) ?? { income: 0, expense: 0 };
     if (t.kind === "income") { income += t.amountMinor; day.income += t.amountMinor; }
     else {
