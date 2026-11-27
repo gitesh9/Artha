@@ -14,7 +14,10 @@
     "test:watch": "vitest",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node --env-file-if-exists=.env scripts/migrate.mjs",
-    "prebuild": "node -e \"for (const d of ['dist','.netlify/v1']) require('fs').rmSync(d,{recursive:true,force:true})\""
+    "prebuild": "node -e \"for (const d of ['dist','.netlify/v1']) require('fs').rmSync(d,{recursive:true,force:true})\"",
+    "test:unit": "vitest run src/test/unit",
+    "e2e": "python3 e2e/run_e2e.py",
+    "e2e:cleanup": "node --env-file-if-exists=.env e2e/cleanup.mjs"
   },
   "overrides": {
     "rolldown": "1.2.1"

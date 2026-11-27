@@ -27,7 +27,7 @@ function Transactions() {
   const search = Route.useSearch();
   const [f, setF] = useState<{ kind?: "income" | "expense" | "transfer_in" | "transfer_out" | undefined; category?: string | undefined; search?: string; from?: string; to?: string; tag?: string }>({ tag: search.tag ?? "", from: search.from ?? "", to: search.to ?? "" });
   const qc = useQueryClient();
-  const { data = [], isFetching, fetchStatus } = useQuery({
+  const { data = [], isFetching, isPending, fetchStatus } = useQuery({
     queryKey: qk.transactions(f),
     queryFn: () => listTransactions({ data: { ...f, search: f.search || undefined, from: f.from || null, to: f.to || null } }),
     placeholderData: (p) => p,
@@ -53,7 +53,7 @@ function Transactions() {
       <label className="mb-5 grid max-w-sm gap-2 text-sm">Tag<Input aria-label="Filter by tag" placeholder="hospital" value={f.tag ?? ""} onChange={e => setF({ ...f, tag: e.target.value })} /></label>
       {f.tag && <div className="mb-5 border-y py-4"><h2 className="font-semibold">#{f.tag.replace(/^#/, "")} · recorded expenses</h2>{[...new Set(data.filter(t => t.kind === "expense").map(t => t.currency))].map(currency => <p key={currency} className="num mt-2">{formatMoney(data.filter(t => t.kind === "expense" && t.currency === currency).reduce((s, t) => s + t.amountMinor, 0), currency)}</p>)}<div className="mt-4 flex flex-wrap gap-4">{[...new Set(data.filter(t => t.kind === "expense").map(t => `${t.occurredOn.slice(0, 7)} · ${t.currency}`))].sort().map(key => { const [month, currency] = key.split(" · "); if (!currency || !month) return null; return <p key={key} className="text-sm">{month} · {formatMoney(data.filter(t => t.kind === "expense" && t.currency === currency && t.occurredOn.startsWith(month)).reduce((s,t) => s + t.amountMinor, 0), currency)}</p>; })}</div></div>}
       <Panel className="p-0">
-        {data.length === 0 ? <p className="p-8 text-center text-muted-foreground">No transactions match.</p> : (
+        {data.length === 0 && (isPending || isFetching) && fetchStatus !== "paused" ? <p role="status" className="p-8 text-center text-muted-foreground">Loading transactions…</p> : data.length === 0 ? <p className="p-8 text-center text-muted-foreground">No transactions match.</p> : (
           <ul className="divide-y">
             {data.map((t) => (
               <li key={t.id} className="grid grid-cols-[minmax(0,1fr)_auto_44px] items-center gap-x-3 gap-y-1 py-4 sm:grid-cols-[100px_minmax(0,1fr)_auto_44px]">

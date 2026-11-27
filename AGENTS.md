@@ -59,3 +59,4 @@ use the editor.
 - Reconstruct dated net worth from account opening dates, acknowledged entries and carried-forward manual valuations; omit explicitly linked duplicate assets. Why: history must not fabricate prior balances or count wealth twice.
 - Resolve auth cookies per allowlisted request origin; partition HTTPS preview cookies. Why: embedded sign-in must persist securely.
 - Run journaled migrations only via the atomic CLI, validating legacy baselines first. Why: upgrades must preserve existing entries.
+- Tests: follow TESTING.md.

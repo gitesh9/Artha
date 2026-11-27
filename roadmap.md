@@ -44,3 +44,6 @@
 - [ ] Optional Account Aggregator connection (blocked: provider onboarding, API contract and lawful consent flow)
 - [ ] Optional signed Android SMS wrapper (blocked: signing/platform permissions and privacy/store review; PWA camera/pasted SMS work independently)
 - [ ] Wider tax-year/special-case coverage (blocked: statutory verification/professional review; verified FY2025–26 supported cases remain available)
+
+- [x] Responsiveness measured: menu switch ~50ms, tap-to-dialog ~130ms; full reloads include deliberate vault unlock
+- [ ] Auto-log transactions from bank SMS with explicit opt-in — blocked: browsers/PWAs cannot read SMS; needs Android wrapper app (READ_SMS permission, Play policy review)

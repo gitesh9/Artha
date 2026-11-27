@@ -1,4 +1,4 @@
-import { createFileRoute, redirect, useNavigate, Link } from "@tanstack/react-router";
+import { createFileRoute, redirect, useNavigate, useRouter, Link } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { LockKeyhole } from "lucide-react";
 import { getCurrentUser } from "@/core/auth/session.functions";
@@ -9,9 +9,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ThemeToggle } from "@/shared/components/ThemeProvider";
 import { verifySecondaryPin } from "@/core/offline/secondary-pin";
+import { safeReturnPath } from "@/core/offline/return-path";
 
 export const Route = createFileRoute("/local-vault")({
   ssr: false,
+  validateSearch: (search: Record<string, unknown>): { redirect?: string } => { const r = safeReturnPath(search["redirect"]); return r ? { redirect: r } : {}; },
   beforeLoad: async () => {
     const offline = !navigator.onLine;
     const user = offline ? await offlineUser() : await getCurrentUser();
@@ -25,6 +27,8 @@ export const Route = createFileRoute("/local-vault")({
 function LocalVault() {
   const { user, exists, offline } = Route.useRouteContext();
   const navigate = useNavigate();
+  const router = useRouter();
+  const { redirect: returnTo } = Route.useSearch();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [configured, setConfigured] = useState(exists);
@@ -42,7 +46,7 @@ function LocalVault() {
       await migrateFinancialData(user.id);
       if (!offline) await rememberOfflineUser(user);
       form.reset();
-      await navigate({ to: "/dashboard", replace: true });
+      if (returnTo) router.history.replace(returnTo); else await navigate({ to: "/dashboard", replace: true });
     } catch (err) { setError(err instanceof Error ? err.message : "Local protection could not open. Keep your passphrase and try again; saved entries have not been removed."); }
     finally { setBusy(false); }
   }
